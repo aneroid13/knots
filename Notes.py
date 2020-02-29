@@ -84,17 +84,26 @@ class NotesApp(App):
             self.root.ids.code.text = self.current_note.text
 
     def create_new_note(self):
-        if self.root.ids.title.text == "" and not self.current_note_button:
             self.current_note = Note()
-
             note_butt = button()
-            note_butt.id = str(self.current_note.id)
+            note_butt.id = self.current_note.id
             note_butt.state = 'down'
             note_butt.group = "Notes"
             note_butt.bind(state=self.button_selection)
             self.root.ids.note_bar.add_widget(note_butt)
             self.find_current_button()
-            print("After: ", str(self.current_note_button.id))
+
+    def title_focused(self):
+        if self.root.ids.title.focused:
+            # Create new note and button
+            if self.root.ids.title.text is "" and not self.current_note_button:
+                self.create_new_note()
+        else:
+            # Remove if empty
+            if self.root.ids.title.text is "":
+                self.root.ids.note_bar.remove_widget(self.current_note_button)
+                self.current_note_button = None
+                self.current_note = None
 
     def title_entered(self):
         if self.root.ids.title.text:
