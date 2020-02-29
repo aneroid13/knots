@@ -14,16 +14,17 @@ from kivy.event import EventDispatcher
 
 class Note:
     def __init__(self):
-        self.uid = uuid.uuid4()
+        self.id = str(uuid.uuid4())
         self.create_time = time.time()
         self.update_time = time.time()
         self.title = ""
+        self.text = ""
         self.tags = []
         self.bookmarked = False
         self.trashed = False
 
     def get_id(self):
-        return self.uid
+        return self.id
 
     # def create(self):
     #     pass
@@ -34,11 +35,14 @@ class Note:
 
 class NoteBank:
     def __init__(self):
-        self.bank = []
+        self.bank = {}
 
     def add_note(self, note):
-        self.bank.append(note)
-        return note.uid
+        self.bank[note.id] = note
+        return note.id
+
+    def get_note(self, id):
+        return self.bank[str(id)]
 
     def update_note(self):
         pass
@@ -61,36 +65,48 @@ class NotesApp(App):
 
     def find_current_button(self):
         for child in self.root.ids.note_bar.children:
-            if str(child.id) == str(self.current_note.uid):
+            if str(child.id) == str(self.current_note.id):
                 self.current_note_button = child
 
     def button_selection(self, instance, pos):
         if pos is 'normal' and \
-                   str(instance.id) == str(self.current_note_button.id):
+           str(instance.id) == str(self.current_note_button.id):
+            self.bank.add_note(self.current_note)
             self.current_note_button = None
             self.current_note = None
+            self.root.ids.title.text = ""
+            self.root.ids.code.text = ""
 
         if pos is 'down':
             self.current_note_button = instance
-            #TODO: get note
+            self.current_note = self.bank.get_note(instance.id)
+            self.root.ids.title.text = self.current_note.title
+            self.root.ids.code.text = self.current_note.text
 
     def create_new_note(self):
-        if self.root.ids.title.text == "" and not self.current_note:
+        if self.root.ids.title.text == "" and not self.current_note_button:
             self.current_note = Note()
 
             note_butt = button()
-            note_butt.id = str(self.current_note.uid)
+            note_butt.id = str(self.current_note.id)
             note_butt.state = 'down'
             note_butt.group = "Notes"
             note_butt.bind(state=self.button_selection)
             self.root.ids.note_bar.add_widget(note_butt)
             self.find_current_button()
+            print("After: ", str(self.current_note_button.id))
 
     def title_entered(self):
         if self.root.ids.title.text:
+            self.current_note.title = self.root.ids.title.text
             self.current_note_button.text = self.root.ids.title.text
 
+    def code_entered(self):
+        if self.current_note:
+            self.current_note.text = self.root.ids.code.text
 
+#TODO:  1. on exit save note to bank
+#       2. save bank to file
     # Event bind example
     # def on_start(self):
     #     self.root.ids['user_input'].bind(on_text_validate=self.enter_message)
