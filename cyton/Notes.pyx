@@ -1,14 +1,13 @@
-# python setup.py build_ext --inplace --embed
-# gcc <C_file_from_cython> -I<include_directory> -L<directory_containing_libpython> -l<name_of_libpython_without_lib_on_the_front> -o <output_file_name>
-# gcc -Os -fPIC ./cyton/Notes.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o pro_notes  #Linux
-# gcc -Os -fPIC -D MS_WIN64 ./cyton/Notes.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o pro_notes  #Win
-
+import docutils
 import time, uuid
 from inspect import getmembers as gm
 from pprint import pprint as pp
 from kivy.app import App
 from kivy.uix.togglebutton import ToggleButton as button
+from kivy.uix.textinput import TextInput as ti
 
+from kivy.properties import NumericProperty, BooleanProperty
+from kivy.uix.screenmanager import Builder, ScreenManager, Screen, SlideTransition
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
 
@@ -112,6 +111,8 @@ class NotesApp(App):
                 self.root.ids.note_bar.remove_widget(self.current_note_button)
                 self.current_note_button = None
                 self.current_note = None
+            #TODO: remove with code button error:
+            # AttributeError: 'NoneType' object has no attribute 'funbind'
 
     def title_entered(self):
         if self.root.ids.title.text:
@@ -122,9 +123,14 @@ class NotesApp(App):
         if self.current_note:
             self.current_note.text = self.root.ids.code.text
 
-
 #TODO:  1. on exit save note to bank
 #       2. save bank to file
+    # Event bind example
+    # def on_start(self):
+    #     self.root.ids['user_input'].bind(on_text_validate=self.enter_message)
+    #
+    # def enter_message(self, instance):
+    #     pass
 
 if __name__ == "__main__":
     NotesApp().run()

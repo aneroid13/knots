@@ -41,6 +41,7 @@ BoxLayout:
                 TabbedPanelItem:
                     id: folders
                     text: 'FL'
+                #    on_release: app.showcase_floatlayout(fl)
                     TreeView:
                         id: folders
                         size_hint: (1, 1)
@@ -49,14 +50,17 @@ BoxLayout:
                 TabbedPanelItem:
                     id: bookmarks
                     text: 'BM'
+                #    on_release: app.showcase_boxlayout(box)
 
                 TabbedPanelItem:
                     id: tags
                     text: 'TG'
+                #    on_release: app.showcase_boxlayout(box)
 
                 TabbedPanelItem:
                     id: trash
                     text: 'TH'
+                #    on_release: app.showcase_boxlayout(box)
 
         BoxLayout:
             size_hint: (.3, 1)
@@ -124,64 +128,12 @@ BoxLayout:
                 RstDocument:
                     id: viewer
                     text: code.text
-
-            GridLayout:
-                rows: 1
-                row_default_height: 32
+            Button:
+                id: send_msg
+                text: 'Send'
                 size_hint_y: None
-                height: 32
-
-                Button:
-                    id: tag_switch
-                    text: 'TS'
-                    size_hint: (None, None)
-                    width: 32
-                    height: 32
-                    on_press: tags.visible = not tags.visible
-
-                TextInput:
-                    id: add_tag
-                    size_hint_y: None
-                    multiline: False
-                    height: 32
-                    size_hint_x: 0 if tags.visible else 1
-                    opacity: 0 if tags.visible else 1
-                    disabled: tags.visible
-                    on_text_validate: tags.values.append(self.text); self.text = ""
-
-                Spinner:
-                    id: tags
-                    text: "tags"
-                    values: []
-                    visible: False
-                    size_hint_x: 1 if self.visible else 0
-                    opacity: 1 if self.visible else 0
-                    disabled: not self.visible
-
-                ToggleButton:
-                    id: bookmarked
-                    text: 'BM'
-                    size_hint: (None, None)
-                    width: 32
-                    height: 32
-
-                ToggleButton:
-                    id: trashed
-                    text: 'TR'
-                    size_hint: (None, None)
-                    width: 32
-                    height: 32
-
-<TagBubbles@Bubble>
-    arrow_pos: "bottom_mid"
-    orientation: 'vertical'
-    size_hint: (None, None)
-    width: 180
-    height: 32
-    BubbleButton:
-        text: "test1"
-    BubbleButton:
-        text: "test2"
+                height: '32dp'
+                on_release:
 
 <CTextInput@TextInput>
     on_focus:
