@@ -69,7 +69,7 @@ class NotesApp(App):
                 self.current_note_button = child
 
     def button_selection(self, instance, pos):
-        if pos is 'normal' and \
+        if pos == 'normal' and \
            str(instance.id) == str(self.current_note_button.id):
             self.bank.add_note(self.current_note)
             self.current_note_button = None
@@ -77,7 +77,7 @@ class NotesApp(App):
             self.root.ids.title.text = ""
             self.root.ids.code.text = ""
 
-        if pos is 'down':
+        if pos == 'down':
             self.current_note_button = instance
             self.current_note = self.bank.get_note(instance.id)
             self.root.ids.title.text = self.current_note.title
@@ -89,6 +89,12 @@ class NotesApp(App):
             note_butt.id = self.current_note.id
             note_butt.state = 'down'
             note_butt.group = "Notes"
+            note_butt.halign = "left"
+            note_butt.valign = "top"
+            note_butt.shorten = True
+
+            note_butt.shorten_from = "right"
+            note_butt.text_size = (180, None)
             note_butt.bind(state=self.button_selection)
             self.root.ids.note_bar.add_widget(note_butt)
             self.find_current_button()
@@ -96,14 +102,17 @@ class NotesApp(App):
     def title_focused(self):
         if self.root.ids.title.focused:
             # Create new note and button
-            if self.root.ids.title.text is "" and not self.current_note_button:
+            if self.root.ids.title.text == "" and not self.current_note_button:
                 self.create_new_note()
         else:
             # Remove if empty
-            if self.root.ids.title.text is "":
+            print(self.root.ids.title.text)
+            if self.current_note_button and not self.root.ids.title.text:
                 self.root.ids.note_bar.remove_widget(self.current_note_button)
                 self.current_note_button = None
                 self.current_note = None
+            #TODO: remove with code button error:
+            # AttributeError: 'NoneType' object has no attribute 'funbind'
 
     def title_entered(self):
         if self.root.ids.title.text:

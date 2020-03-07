@@ -68,25 +68,36 @@ BoxLayout:
             padding: 2
             spacing: 5
 
-            Button:
-                id: new_note
-                text: 'New note'
-                height: 32
+            GridLayout:
+                rows: 1
+                row_default_height: 32
                 size_hint_y: None
-                on_release: app.create_note()
+                height: 32
+
+                Button:
+                    id: sort
+                    text: '^'
+                    size_hint: (None, None)
+                    height: 32
+                    width: 32
+
+                TextInput:
+                    id: search
+                    size_hint_y: None
+                    multiline: False
+                    height: 32
+                    focus: True
+
+#            ScrollView:
+#                do_scroll_x: False
+#                do_scroll_y: True
+#             #   size_hint: (1, None)
 
             GridLayout:
                 id: note_bar
                 size_hint: (1, 1)
                 cols: 1
                 row_default_height: 64
-
-            TextInput:
-                id: search
-                size_hint_y: None
-                multiline: False
-                height: 32
-                focus: True
 
         BoxLayout:
             size_hint: (.7, 1)
