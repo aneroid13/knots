@@ -17,14 +17,14 @@ BoxLayout:
 
                 Button:
                     id: new_storage
-                    text: 'Folder'
+                    text: 'New storage'
                     size_hint_y: None
                     height: '32dp'
                     on_release:
 
                 Button:
-                    id: new_note
-                    text: 'Folder'
+                    id: settings
+                    text: 'Settings'
                     size_hint_y: None
                     height: '32dp'
                     on_release:
@@ -159,18 +159,22 @@ BoxLayout:
                     disabled: not self.visible
 
                 ToggleButton:
-                    id: bookmarked
+                    id: bookmark
                     text: 'BM'
                     size_hint: (None, None)
                     width: 32
                     height: 32
+                    disabled: True
+                    on_release: app.bookmarked()
 
                 ToggleButton:
-                    id: trashed
+                    id: trash
                     text: 'TR'
                     size_hint: (None, None)
                     width: 32
                     height: 32
+                    disabled: True
+                    on_release: app.trashed()
 
 <TagBubbles@Bubble>
     arrow_pos: "bottom_mid"

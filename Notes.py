@@ -21,17 +21,17 @@ class Note:
         self.title = ""
         self.text = ""
         self.tags = []
-        self.bookmarked = False
-        self.trashed = False
+        self.bookmark = False
+        self.trash = False
 
     def get_id(self):
         return self.id
 
-    # def create(self):
-    #     pass
-    #
-    # def save(self):
-    #     pass
+    def bookmarked(self):
+        self.bookmark = not self.bookmark
+
+    def trashed(self):
+        self.trash = not self.trash
 
 
 class NoteBank:
@@ -77,12 +77,26 @@ class NotesApp(App):
             self.current_note = None
             self.root.ids.title.text = ""
             self.root.ids.code.text = ""
+            self.root.ids.bookmark.disabled = True
+            self.root.ids.trash.disabled = True
+            self.root.ids.bookmark.state = 'normal'
+            self.root.ids.trash.state = 'normal'
 
         if pos == 'down':
             self.current_note_button = instance
             self.current_note = self.bank.get_note(instance.id)
             self.root.ids.title.text = self.current_note.title
             self.root.ids.code.text = self.current_note.text
+            self.root.ids.bookmark.disabled = False
+            self.root.ids.trash.disabled = False
+            if self.current_note.bookmark:
+                self.root.ids.bookmark.state = 'down'
+            else:
+                self.root.ids.bookmark.state = 'normal'
+            if self.current_note.trash:
+                self.root.ids.trash.state = 'down'
+            else:
+                self.root.ids.trash.state = 'normal'
 
     def create_new_note(self):
             self.current_note = Note()
@@ -100,6 +114,11 @@ class NotesApp(App):
             self.root.ids.note_bar.add_widget(note_butt)
             self.find_current_button()
 
+            self.root.ids.bookmark.disabled = False
+            self.root.ids.trash.disabled = False
+            self.root.ids.bookmark.state = 'normal'
+            self.root.ids.trash.state = 'normal'
+
     def title_focused(self):
         if self.root.ids.title.focused:
             # Create new note and button
@@ -107,11 +126,16 @@ class NotesApp(App):
                 self.create_new_note()
         else:
             # Remove if empty
-            print(self.root.ids.title.text)
             if self.current_note_button and not self.root.ids.title.text:
                 self.root.ids.note_bar.remove_widget(self.current_note_button)
                 self.current_note_button = None
                 self.current_note = None
+
+    def bookmarked(self):
+        self.current_note.bookmarked()
+
+    def trashed(self):
+        self.current_note.trashed()
 
     def title_entered(self):
         if self.root.ids.title.text:
