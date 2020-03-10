@@ -33,6 +33,8 @@ class Note:
     def trashed(self):
         self.trash = not self.trash
 
+    def add_tag(self, tag):
+        self.tags.append(tag)
 
 class NoteBank:
     def __init__(self):
@@ -77,6 +79,7 @@ class NotesApp(App):
             self.current_note = None
             self.root.ids.title.text = ""
             self.root.ids.code.text = ""
+            self.root.ids.tags.values = []
             self.root.ids.bookmark.disabled = True
             self.root.ids.trash.disabled = True
             self.root.ids.bookmark.state = 'normal'
@@ -87,6 +90,8 @@ class NotesApp(App):
             self.current_note = self.bank.get_note(instance.id)
             self.root.ids.title.text = self.current_note.title
             self.root.ids.code.text = self.current_note.text
+            self.root.ids.tags.values = self.current_note.tags
+            self.root.ids.tags.text = "tags"
             self.root.ids.bookmark.disabled = False
             self.root.ids.trash.disabled = False
             if self.current_note.bookmark:
@@ -114,6 +119,7 @@ class NotesApp(App):
             self.root.ids.note_bar.add_widget(note_butt)
             self.find_current_button()
 
+            self.root.ids.tags.values = self.current_note.tags
             self.root.ids.bookmark.disabled = False
             self.root.ids.trash.disabled = False
             self.root.ids.bookmark.state = 'normal'
@@ -136,6 +142,10 @@ class NotesApp(App):
 
     def trashed(self):
         self.current_note.trashed()
+
+    def tag_added(self, text):
+        self.current_note.add_tag(str(text))
+        self.root.ids.tags.values = self.current_note.tags
 
     def title_entered(self):
         if self.root.ids.title.text:

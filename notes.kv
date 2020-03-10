@@ -147,7 +147,7 @@ BoxLayout:
                     size_hint_x: 0 if tags.visible else 1
                     opacity: 0 if tags.visible else 1
                     disabled: tags.visible
-                    on_text_validate: tags.values.append(self.text); self.text = ""
+                    on_text_validate: app.tag_added(self.text); self.text = ""
 
                 Spinner:
                     id: tags
