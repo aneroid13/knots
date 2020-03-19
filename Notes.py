@@ -7,11 +7,14 @@ import time, uuid
 from inspect import getmembers as gm
 from pprint import pprint as pp
 from kivy.app import App
+from kivy.config import Config
+from kivy.atlas import Atlas
 from kivy.uix.togglebutton import ToggleButton as button
 
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
 
+Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
 class Note:
     def __init__(self):
@@ -58,6 +61,7 @@ class NotesApp(App):
         self.bank = NoteBank()
         self.current_note = None
         self.current_note_button = None
+    #    atlas = Atlas('./images/default/default.atlas')
 
     def create_note(self):
         note = Note()
