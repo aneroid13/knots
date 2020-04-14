@@ -4,17 +4,21 @@
 # gcc -Os -fPIC -D MS_WIN64 ./cyton/Notes.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o pro_notes  #Win
 
 import time, uuid
+from anytree import NodeMixin, RenderTree
 from inspect import getmembers as gm
 from pprint import pprint as pp
 from kivy.app import App
 from kivy.config import Config
 from kivy.atlas import Atlas
+from kivy.uix.treeview import TreeViewLabel
+from kivy.core.window import Window
 from kivy.uix.togglebutton import ToggleButton as button
 
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
+Config.set('kivy', 'log_level', 'debug')  # string, one of ‘trace’, ‘debug’, ‘info’, ‘warning’, ‘error’ or ‘critical’
 
 class Note:
     def __init__(self):
@@ -53,15 +57,45 @@ class NoteBank:
     def update_note(self):
         pass
 
+class ThemeFolders(NodeMixin):  # Add Node feature
+    def __init__(self, name, id, parent=None, children=None):
+        self.name = name
+        self.id = id
+        self.parent = parent
+        if children:
+            self.children = children
+
 class NotesApp(App):
     title = "Notes"
+    atlas_path = 'atlas://images/default/default'
 
     def __init__(self):
         super().__init__()
         self.bank = NoteBank()
         self.current_note = None
         self.current_note_button = None
-    #    atlas = Atlas('./images/default/default.atlas')
+     #   atlas = Atlas('images/default/default.atlas')
+
+    def tree(self):
+        root = ThemeFolders("root", 0)
+        ansible = ThemeFolders("Ansible", 1, parent=root)
+        redhat = ThemeFolders("RedHat", 2, parent=root)
+        proglang = ThemeFolders("Programming", 30, parent=root)
+        go = ThemeFolders("GO", 31, parent=proglang)
+        python = ThemeFolders("Python", 32, parent=proglang)
+        rust = ThemeFolders("Rust", 33, parent=proglang)
+
+    #   self.root.ids.folders_tree.bind(minimum_height=self.root.ids.folders_tree.setter('height'))
+        self.populate_tree_view(self.root.ids.folders_tree, None, root)
+
+    def populate_tree_view(self, tree_view, parent, node):
+        if parent is None:
+            tree_node = tree_view.add_node(TreeViewLabel(text=node.name, is_open=True))
+        else:
+            tree_node = tree_view.add_node(TreeViewLabel(text=node.name, is_open=True), parent)
+
+        for child_node in node.children:
+            self.populate_tree_view(tree_view, tree_node, child_node)
 
     def create_note(self):
         note = Note()
@@ -108,6 +142,7 @@ class NotesApp(App):
                 self.root.ids.trash.state = 'normal'
 
     def create_new_note(self):
+            self.tree()
             self.current_note = Note()
             note_butt = button()
             note_butt.id = self.current_note.id

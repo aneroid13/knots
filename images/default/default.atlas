@@ -1,1 +1,1 @@
-{"myatlas-0.png": {"star1": [2, 0, 32, 32]}, "myatlas-1.png": {"star2": [2, 1, 32, 31]}}
+{"star1.png": {"star1": [0, 0, 30, 30]}, "star2.png": {"star2": [0, 0, 30, 30]}}

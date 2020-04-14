@@ -41,16 +41,30 @@ BoxLayout:
                 TabbedPanelItem:
                     id: folders
                     text: 'FL'
-                    TreeView:
-                        id: folders
-                        size_hint: (1, 1)
-                        text: ''
+                    ScrollView:
+                        do_scroll_x: False
+                    #    size_hint: 1, .1
+                        # setting the width of the scrollbar to 50pixels
+                        bar_width: 50
+                        # setting the color of the active bar using rgba
+                        bar_color: 5, 10, 15, .8
+                        # setting the color of the inactive bar using rgba
+                        bar_inactive_color: 5, 20, 10, .5
+                        # setting the content only to scroll via bar, not content
+                        scroll_type: ['bars']
+
+                        TreeView:
+                            id: folders_tree
+                            size_hint: (1, 1)
+                            text: ''
 
                 TabbedPanelItem:
                     id: bookmarks
                 #    text: 'BM'
-                    background_normal: 'atlas://images/default/default/star1'
-                    background_down: 'atlas://images/default/default/star2'
+                    background_normal: app.atlas_path + '/star1'
+                    background_down: app.atlas_path + '/star2'
+                #    background_normal: 'atlas://images/default/default/star1'
+                #    background_down: 'atlas://images/default/default/star2'
 
                 TabbedPanelItem:
                     id: tags
@@ -112,7 +126,7 @@ BoxLayout:
                 on_text: app.title_entered()
                 on_focus: app.title_focused()
 
-            BoxLayout:
+            Carousel:
                 size_hint: (1, 1)
                 orientation: 'horizontal'
                 padding: 0
@@ -177,6 +191,14 @@ BoxLayout:
                     height: 32
                     disabled: True
                     on_release: app.trashed()
+
+<ColoredBL@BoxLayout>
+    canvas.before:
+    Color:
+        rgba: 0, 1, 0, 1
+    Rectangle:
+        pos: self.pos
+        size: self.size
 
 <TagBubbles@Bubble>
     arrow_pos: "bottom_mid"
