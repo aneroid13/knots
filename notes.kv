@@ -43,19 +43,14 @@ BoxLayout:
                     text: 'FL'
                     ScrollView:
                         do_scroll_x: False
-                    #    size_hint: 1, .1
-                        # setting the width of the scrollbar to 50pixels
-                        bar_width: 50
-                        # setting the color of the active bar using rgba
-                        bar_color: 5, 10, 15, .8
-                        # setting the color of the inactive bar using rgba
-                        bar_inactive_color: 5, 20, 10, .5
-                        # setting the content only to scroll via bar, not content
-                        scroll_type: ['bars']
+                        size_hint: 1, 1
+                        bar_color: [.5, .10, .15, .8]
+                        bar_inactive_color: [.5, .20, .10, .5]
+                        scroll_type: ['bars']  # [‘bars’, ‘content’]
 
                         TreeView:
                             id: folders_tree
-                            size_hint: (1, 1)
+                            size_hint: (1, None)
                             text: ''
 
                 TabbedPanelItem:
@@ -100,16 +95,15 @@ BoxLayout:
                     height: 32
                     focus: True
 
-#            ScrollView:
-#                do_scroll_x: False
-#                do_scroll_y: True
-#             #   size_hint: (1, None)
+            ScrollView:
+                do_scroll_x: False
+                size_hint: 1, 1
 
-            GridLayout:
-                id: note_bar
-                size_hint: (1, 1)
-                cols: 1
-                row_default_height: 64
+                GridLayout:
+                    id: note_bar
+                    size_hint: (1, None)
+                    cols: 1
+                    row_default_height: 64
 
         BoxLayout:
             size_hint: (.7, 1)

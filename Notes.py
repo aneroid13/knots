@@ -57,6 +57,7 @@ class NoteBank:
     def update_note(self):
         pass
 
+
 class ThemeFolders(NodeMixin):  # Add Node feature
     def __init__(self, name, id, parent=None, children=None):
         self.name = name
@@ -65,9 +66,11 @@ class ThemeFolders(NodeMixin):  # Add Node feature
         if children:
             self.children = children
 
+
 class NotesApp(App):
     title = "Notes"
     atlas_path = 'atlas://images/default/default'
+    window = Window
 
     def __init__(self):
         super().__init__()
@@ -75,6 +78,14 @@ class NotesApp(App):
         self.current_note = None
         self.current_note_button = None
      #   atlas = Atlas('images/default/default.atlas')
+
+    def build(self):
+        self.root.ids.folders_tree.bind(minimum_height=self.root.ids.folders_tree.setter('height'))
+        self.root.ids.note_bar.bind(minimum_height=self.root.ids.note_bar.setter('height'))
+
+        self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
+        self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
+        self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
 
     def tree(self):
         root = ThemeFolders("root", 0)
@@ -84,9 +95,7 @@ class NotesApp(App):
         go = ThemeFolders("GO", 31, parent=proglang)
         python = ThemeFolders("Python", 32, parent=proglang)
         rust = ThemeFolders("Rust", 33, parent=proglang)
-
-    #   self.root.ids.folders_tree.bind(minimum_height=self.root.ids.folders_tree.setter('height'))
-        self.populate_tree_view(self.root.ids.folders_tree, None, root)
+        return root
 
     def populate_tree_view(self, tree_view, parent, node):
         if parent is None:
@@ -102,6 +111,7 @@ class NotesApp(App):
         note_butt = button()
         note_butt.id = str(note.get_id())
         note_butt.group = "Notes"
+    #    self.root.ids.nfsdote_bar.bind(minimum_height=self.root.ids.note_bar.setter('height'))  # for scroll option
         self.root.ids.note_bar.add_widget(note_butt)
 
     def find_current_button(self):
@@ -142,7 +152,6 @@ class NotesApp(App):
                 self.root.ids.trash.state = 'normal'
 
     def create_new_note(self):
-            self.tree()
             self.current_note = Note()
             note_butt = button()
             note_butt.id = self.current_note.id
