@@ -204,6 +204,12 @@ class NotesApp(App):
         if self.current_note:
             self.current_note.text = self.root.ids.code.text
 
+    def search_entered(self):
+        for butt in self.root.ids.note_bar.children:
+            if self.root.ids.search.text not in butt.text:
+                butt.opacity = 0
+            else:
+                butt.opacity = 1
 
 #TODO:  1. on exit save note to bank
 #       2. save bank to file
