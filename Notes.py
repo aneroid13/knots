@@ -27,6 +27,7 @@ class Note:
         self.update_time = time.time()
         self.title = ""
         self.text = ""
+        self.codetype = ""
         self.tags = []
         self.folder_id = None
         self.bookmark = False
@@ -58,7 +59,6 @@ class NoteBank:
     def get_notes_by_folder(self, folder_id):
         folder_notes = []
         for note in self.bank.values():
-            print(note.folder_id, folder_id)
             if note.folder_id == folder_id:
                 folder_notes.append(note)
         return folder_notes
@@ -98,7 +98,7 @@ class NotesApp(App):
         self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
 
     def tree(self):
-        root = ThemeFolders("root", 0)
+        root = ThemeFolders("MyStorage1", 0)
         ansible = ThemeFolders("Ansible", 1, parent=root)
         redhat = ThemeFolders("RedHat", 2, parent=root)
         proglang = ThemeFolders("Programming", 30, parent=root)
@@ -148,7 +148,7 @@ class NotesApp(App):
 
     def button_selection(self, instance, pos):
         if pos == 'normal' and \
-           str(instance.id) == str(self.current_note_button.id): #TODO: fix broken: crash on click
+           str(instance.id) == str(self.current_note_button.id):  # TODO: fix broken: crash on click
             self.bank.add_note(self.current_note)
             self.current_note_button = None
             self.current_note = None
@@ -239,6 +239,7 @@ class NotesApp(App):
 
 #TODO:  1. on exit save note to bank
 #       2. save bank to file
+#       3. Autosave by idle time
 
 if __name__ == "__main__":
     NotesApp().run()

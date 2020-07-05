@@ -51,10 +51,11 @@ BoxLayout:
                         TreeView:
                             id: folders_tree
                             size_hint: (1, None)
+                            hide_root: True
                             indent_start: 0
                             indent_level: 7
                             color_selected: [.5, .10, .15, .8]
-                            on_touch_up: app.tree_selected(self.selected_node.id)
+                            on_touch_up: if self.selected_node: app.tree_selected(self.selected_node.id)
 
                 TabbedPanelItem:
                     id: bookmarks
