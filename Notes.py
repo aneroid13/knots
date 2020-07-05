@@ -148,7 +148,7 @@ class NotesApp(App):
 
     def button_selection(self, instance, pos):
         if pos == 'normal' and \
-           str(instance.id) == str(self.current_note_button.id):
+           str(instance.id) == str(self.current_note_button.id): #TODO: fix broken: crash on click
             self.bank.add_note(self.current_note)
             self.current_note_button = None
             self.current_note = None
