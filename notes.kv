@@ -51,7 +51,10 @@ BoxLayout:
                         TreeView:
                             id: folders_tree
                             size_hint: (1, None)
-                            text: ''
+                            indent_start: 0
+                            indent_level: 7
+                            color_selected: [.5, .10, .15, .8]
+                            on_touch_up: app.tree_selected(self.selected_node.id)
 
                 TabbedPanelItem:
                     id: bookmarks
@@ -119,7 +122,7 @@ BoxLayout:
                 height: '32dp'
                 focus: True
                 on_text: app.title_entered()
-                on_focus: app.title_focused()
+                on_focus: app.title_focused(self.focused)
 
             Carousel:
                 size_hint: (1, 1)

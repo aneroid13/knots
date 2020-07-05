@@ -28,6 +28,7 @@ class Note:
         self.title = ""
         self.text = ""
         self.tags = []
+        self.folder_id = None
         self.bookmark = False
         self.trash = False
 
@@ -54,8 +55,16 @@ class NoteBank:
     def get_note(self, id):
         return self.bank[str(id)]
 
-    def update_note(self):
-        pass
+    def get_notes_by_folder(self, folder_id):
+        folder_notes = []
+        for note in self.bank.values():
+            print(note.folder_id, folder_id)
+            if note.folder_id == folder_id:
+                folder_notes.append(note)
+        return folder_notes
+
+    # def update_note(self):
+    #     pass
 
 
 class ThemeFolders(NodeMixin):  # Add Node feature
@@ -75,6 +84,7 @@ class NotesApp(App):
     def __init__(self):
         super().__init__()
         self.bank = NoteBank()
+        self.current_folder_id = '0'
         self.current_note = None
         self.current_note_button = None
      #   atlas = Atlas('images/default/default.atlas')
@@ -99,32 +109,20 @@ class NotesApp(App):
 
     def populate_tree_view(self, tree_view, parent, node):
         if parent is None:
-            tree_node = tree_view.add_node(TreeViewLabel(text=node.name, is_open=True))
+            tree_node = tree_view.add_node(TreeViewLabel(id=str(node.id), text=node.name, is_open=True))
         else:
-            tree_node = tree_view.add_node(TreeViewLabel(text=node.name, is_open=True), parent)
+            tree_node = tree_view.add_node(TreeViewLabel(id=str(node.id), text=node.name, is_open=True), parent)
 
         for child_node in node.children:
             self.populate_tree_view(tree_view, tree_node, child_node)
-
-    def create_note(self):
-        note = Note()
-        note_butt = button()
-        note_butt.id = str(note.get_id())
-        note_butt.group = "Notes"
-    #    self.root.ids.nfsdote_bar.bind(minimum_height=self.root.ids.note_bar.setter('height'))  # for scroll option
-        self.root.ids.note_bar.add_widget(note_butt)
 
     def find_current_button(self):
         for child in self.root.ids.note_bar.children:
             if str(child.id) == str(self.current_note.id):
                 self.current_note_button = child
 
-    def button_selection(self, instance, pos):
-        if pos == 'normal' and \
-           str(instance.id) == str(self.current_note_button.id):
-            self.bank.add_note(self.current_note)
-            self.current_note_button = None
-            self.current_note = None
+    def init_notes_widgets(self):
+        if not self.current_note:
             self.root.ids.title.text = ""
             self.root.ids.code.text = ""
             self.root.ids.tags.values = []
@@ -132,10 +130,7 @@ class NotesApp(App):
             self.root.ids.trash.disabled = True
             self.root.ids.bookmark.state = 'normal'
             self.root.ids.trash.state = 'normal'
-
-        if pos == 'down':
-            self.current_note_button = instance
-            self.current_note = self.bank.get_note(instance.id)
+        else:
             self.root.ids.title.text = self.current_note.title
             self.root.ids.code.text = self.current_note.text
             self.root.ids.tags.values = self.current_note.tags
@@ -151,30 +146,47 @@ class NotesApp(App):
             else:
                 self.root.ids.trash.state = 'normal'
 
+    def button_selection(self, instance, pos):
+        if pos == 'normal' and \
+           str(instance.id) == str(self.current_note_button.id):
+            self.bank.add_note(self.current_note)
+            self.current_note_button = None
+            self.current_note = None
+        if pos == 'down':
+            self.current_note_button = instance
+            self.current_note = self.bank.get_note(instance.id)
+
+        self.init_notes_widgets()
+
     def create_new_note(self):
-            self.current_note = Note()
-            note_butt = button()
-            note_butt.id = self.current_note.id
+        self.current_note = Note()
+        self.current_note.folder_id = self.current_folder_id
+        self.add_note_on_bar(self.current_note.id, "", True)
+        self.find_current_button()
+
+        self.root.ids.tags.values = self.current_note.tags
+        self.root.ids.bookmark.disabled = False
+        self.root.ids.trash.disabled = False
+        self.root.ids.bookmark.state = 'normal'
+        self.root.ids.trash.state = 'normal'
+
+    def add_note_on_bar(self, note_id, note_title, current):
+        note_butt = button()
+        note_butt.id = str(note_id)
+        note_butt.text = note_title
+        note_butt.group = "Notes"
+        note_butt.halign = "left"
+        note_butt.valign = "top"
+        note_butt.shorten = True
+        note_butt.shorten_from = "right"
+        note_butt.text_size = (180, None)
+        if current:
             note_butt.state = 'down'
-            note_butt.group = "Notes"
-            note_butt.halign = "left"
-            note_butt.valign = "top"
-            note_butt.shorten = True
+        note_butt.bind(state=self.button_selection)
+        self.root.ids.note_bar.add_widget(note_butt)
 
-            note_butt.shorten_from = "right"
-            note_butt.text_size = (180, None)
-            note_butt.bind(state=self.button_selection)
-            self.root.ids.note_bar.add_widget(note_butt)
-            self.find_current_button()
-
-            self.root.ids.tags.values = self.current_note.tags
-            self.root.ids.bookmark.disabled = False
-            self.root.ids.trash.disabled = False
-            self.root.ids.bookmark.state = 'normal'
-            self.root.ids.trash.state = 'normal'
-
-    def title_focused(self):
-        if self.root.ids.title.focused:
+    def title_focused(self, focused):
+        if focused:
             # Create new note and button
             if self.root.ids.title.text == "" and not self.current_note_button:
                 self.create_new_note()
@@ -199,17 +211,31 @@ class NotesApp(App):
         if self.root.ids.title.text:
             self.current_note.title = self.root.ids.title.text
             self.current_note_button.text = self.root.ids.title.text
+            self.current_note.update_time = time.time()
 
     def code_entered(self):
         if self.current_note:
             self.current_note.text = self.root.ids.code.text
+            self.current_note.update_time = time.time()
 
     def search_entered(self):
         for butt in self.root.ids.note_bar.children:
             if self.root.ids.search.text not in butt.text:
-                butt.opacity = 0
+                butt.opacity = 0.2
             else:
                 butt.opacity = 1
+
+    def tree_selected(self, treenode_id):
+        if self.current_note:
+            self.bank.add_note(self.current_note)
+            self.current_note = None
+            self.current_note_button = None
+            self.init_notes_widgets()
+
+        self.current_folder_id = str(treenode_id)
+        self.root.ids.note_bar.clear_widgets()  # clear note_bar
+        for note in self.bank.get_notes_by_folder(self.current_folder_id):  # fill note_bar
+            self.add_note_on_bar(note.id, note.title, False)
 
 #TODO:  1. on exit save note to bank
 #       2. save bank to file
