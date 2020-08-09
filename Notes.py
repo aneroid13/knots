@@ -10,9 +10,12 @@ from pprint import pprint as pp
 from kivy.app import App
 from kivy.config import Config
 from kivy.atlas import Atlas
-from kivy.uix.treeview import TreeViewLabel
+from kivy.uix.treeview import TreeViewLabel, TreeViewNode
 from kivy.core.window import Window
-from kivy.uix.togglebutton import ToggleButton as button
+from kivy.uix.togglebutton import ToggleButton as button, Button
+from kivy.uix.label import Label
+from kivy.uix.textinput import TextInput
+from kivy.uix.boxlayout import BoxLayout
 
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
@@ -75,6 +78,26 @@ class ThemeFolders(NodeMixin):  # Add Node feature
         if children:
             self.children = children
 
+class TreeView_LabelButt(BoxLayout, TreeViewNode):
+    def __init__(self, msg, **kwargs):
+        super(TreeView_LabelButt, self).__init__(**kwargs)
+        self.label = Label()
+        self.label.text = msg
+        self.butt = Button()
+        self.add_widget(self.label)
+        self.add_widget(self.butt)
+
+class TreeView_Folder(TreeViewLabel):
+    def __init__(self, folder_id, **kwargs):
+        self.folder_id = folder_id
+        super(TreeView_Folder, self).__init__(**kwargs)
+
+class TreeView_NewFolderInput(BoxLayout, TreeViewNode):
+    def __init__(self, msg, **kwargs):
+        super(TreeView_NewFolderInput, self).__init__(**kwargs)
+        self.txtinp = TextInput(text=msg, multiline=False)
+    #    self.txtinp.on_text_validate(NotesApp.add_new_folder(self.parent_node.folder_id))
+        self.add_widget(self.txtinp)
 
 class NotesApp(App):
     title = "Notes"
@@ -109,9 +132,9 @@ class NotesApp(App):
 
     def populate_tree_view(self, tree_view, parent, node):
         if parent is None:
-            tree_node = tree_view.add_node(TreeViewLabel(id=str(node.id), text=node.name, is_open=True))
+            tree_node = tree_view.add_node(TreeView_Folder(folder_id=node.id, text=node.name, is_open=True))
         else:
-            tree_node = tree_view.add_node(TreeViewLabel(id=str(node.id), text=node.name, is_open=True), parent)
+            tree_node = tree_view.add_node(TreeView_Folder(folder_id=node.id, text=node.name, is_open=True), parent)
 
         for child_node in node.children:
             self.populate_tree_view(tree_view, tree_node, child_node)
@@ -185,7 +208,10 @@ class NotesApp(App):
         note_butt.bind(state=self.button_selection)
         self.root.ids.note_bar.add_widget(note_butt)
 
-    def title_focused(self, focused):
+    def add_new_folder(self):
+        print('test')
+
+    def KV_title_focused(self, focused):
         if focused:
             # Create new note and button
             if self.root.ids.title.text == "" and not self.current_note_button:
@@ -197,35 +223,37 @@ class NotesApp(App):
                 self.current_note_button = None
                 self.current_note = None
 
-    def bookmarked(self):
-        self.current_note.bookmarked()
+    def KV_bookmarked(self):
+        self.current_note.KV_bookmarked()
 
-    def trashed(self):
-        self.current_note.trashed()
+    def KV_trashed(self):
+        self.current_note.KV_trashed()
 
-    def tag_added(self, text):
+    def KV_tag_added(self, text):
         self.current_note.add_tag(str(text))
         self.root.ids.tags.values = self.current_note.tags
 
-    def title_entered(self):
+    def KV_title_entered(self):
         if self.root.ids.title.text:
             self.current_note.title = self.root.ids.title.text
             self.current_note_button.text = self.root.ids.title.text
             self.current_note.update_time = time.time()
 
-    def code_entered(self):
+    def KV_code_entered(self):
         if self.current_note:
             self.current_note.text = self.root.ids.code.text
             self.current_note.update_time = time.time()
 
-    def search_entered(self):
+    def KV_search_entered(self):
         for butt in self.root.ids.note_bar.children:
             if self.root.ids.search.text not in butt.text:
                 butt.opacity = 0.2
+                butt.disable = True
             else:
                 butt.opacity = 1
+                butt.disable = False
 
-    def tree_selected(self, treenode_id):
+    def KV_tree_selected(self, treenode_id):
         if self.current_note:
             self.bank.add_note(self.current_note)
             self.current_note = None
@@ -236,6 +264,10 @@ class NotesApp(App):
         self.root.ids.note_bar.clear_widgets()  # clear note_bar
         for note in self.bank.get_notes_by_folder(self.current_folder_id):  # fill note_bar
             self.add_note_on_bar(note.id, note.title, False)
+
+    def KV_button_add_folder(self, treenode):
+        self.root.ids.folders_tree.add_node(TreeView_NewFolderInput("New folder"), parent=treenode)
+
 
 #TODO:  1. on exit save note to bank
 #       2. save bank to file

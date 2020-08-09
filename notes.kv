@@ -41,21 +41,36 @@ BoxLayout:
                 TabbedPanelItem:
                     id: folders
                     text: 'FL'
-                    ScrollView:
-                        do_scroll_x: False
-                        size_hint: 1, 1
-                        bar_color: [.5, .10, .15, .8]
-                        bar_inactive_color: [.5, .20, .10, .5]
-                        scroll_type: ['bars']  # [‘bars’, ‘content’]
+                    BoxLayout:
+                    #    cols: 1
+                        size_hint: (1, 1)
+                        orientation: 'vertical'
+                        BoxLayout:
+                            size: (24, 24)
+                            size_hint: (0.5, None)
+                            orientation: 'horizontal'
+                            Button:
+                                size: (24, 24)
+                                text: "+"
+                                on_release: if hasattr(folders_tree.selected_node, "folder_id") : app.KV_button_add_folder(folders_tree.selected_node)
+                            Button:
+                                size: (24, 24)
+                                text: "-"
+                        ScrollView:
+                            do_scroll_x: False
+                            size_hint: 1, 1
+                            bar_color: [.5, .10, .15, .8]
+                            bar_inactive_color: [.5, .20, .10, .5]
+                            scroll_type: ['bars']  # [‘bars’, ‘content’]
 
-                        TreeView:
-                            id: folders_tree
-                            size_hint: (1, None)
-                            hide_root: True
-                            indent_start: 0
-                            indent_level: 7
-                            color_selected: [.5, .10, .15, .8]
-                            on_touch_up: if self.selected_node: app.tree_selected(self.selected_node.id)
+                            TreeView:
+                                id: folders_tree
+                                size_hint: (1, None)
+                                hide_root: True
+                                indent_start: 4
+                                indent_level: 7
+                                color_selected: [.5, .10, .15, .8]
+                                on_touch_up: if hasattr(self.selected_node, "folder_id") : app.KV_tree_selected(self.selected_node.folder_id)
 
                 TabbedPanelItem:
                     id: bookmarks
@@ -98,7 +113,7 @@ BoxLayout:
                     multiline: False
                     height: 32
                     focus: True
-                    on_text: app.search_entered()
+                    on_text: app.KV_search_entered()
 
             ScrollView:
                 do_scroll_x: False
@@ -122,8 +137,8 @@ BoxLayout:
                 multiline: False
                 height: '32dp'
                 focus: True
-                on_text: app.title_entered()
-                on_focus: app.title_focused(self.focused)
+                on_text: app.KV_title_entered()
+                on_focus: app.KV_title_focused(self.focused)
 
             Carousel:
                 size_hint: (1, 1)
@@ -134,7 +149,7 @@ BoxLayout:
                 CodeInput:
                     id: code
                     text: ''
-                    on_text: app.code_entered()
+                    on_text: app.KV_code_entered()
 
                 RstDocument:
                     id: viewer
@@ -162,7 +177,7 @@ BoxLayout:
                     size_hint_x: 0 if tags.visible else 1
                     opacity: 0 if tags.visible else 1
                     disabled: tags.visible
-                    on_text_validate: app.tag_added(self.text); self.text = ""
+                    on_text_validate: app.KV_tag_added(self.text); self.text = ""
 
                 Spinner:
                     id: tags
@@ -180,7 +195,7 @@ BoxLayout:
                     width: 32
                     height: 32
                     disabled: True
-                    on_release: app.bookmarked()
+                    on_release: app.KV_bookmarked()
 
                 ToggleButton:
                     id: trash
@@ -189,7 +204,7 @@ BoxLayout:
                     width: 32
                     height: 32
                     disabled: True
-                    on_release: app.trashed()
+                    on_release: app.KV_trashed()
 
 <ColoredBL@BoxLayout>
     canvas.before:
