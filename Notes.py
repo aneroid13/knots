@@ -69,11 +69,17 @@ class NoteBank:
     # def update_note(self):
     #     pass
 
+class Storage:
+    def __init__(self, Name, Type):
+        self.name = Name
+        self.id = uuid.uuid4().hex
+        self.root_folder = ThemeFolders(self.name, str(uuid.uuid4()))
+        self.type = Type
 
 class ThemeFolders(NodeMixin):  # Add Node feature
-    def __init__(self, name, id, parent=None, children=None):
+    def __init__(self, name, parent=None, children=None):
         self.name = name
-        self.id = id
+        self.id = str(uuid.uuid4())
         self.parent = parent
         if children:
             self.children = children
@@ -96,12 +102,17 @@ class TreeView_NewFolderInput(BoxLayout, TreeViewNode):
     def __init__(self, msg, **kwargs):
         super(TreeView_NewFolderInput, self).__init__(**kwargs)
         self.txtinp = TextInput(text=msg, multiline=False)
-    #    self.txtinp.on_text_validate(NotesApp.add_new_folder(self.parent_node.folder_id))
+        self.txtinp.bind(on_text_validate=self.add_new_folder)
         self.add_widget(self.txtinp)
+
+    def add_new_folder(self, txt_item):
+        parent_folder_id = super().parent_node.folder_id
+        Notes.add_new_folder(parent_folder_id, txt_item.text)
 
 class NotesApp(App):
     title = "Notes"
     atlas_path = 'atlas://images/default/default'
+    #   atlas = Atlas('images/default/default.atlas')
     window = Window
 
     def __init__(self):
@@ -110,25 +121,36 @@ class NotesApp(App):
         self.current_folder_id = '0'
         self.current_note = None
         self.current_note_button = None
-     #   atlas = Atlas('images/default/default.atlas')
+        default_storage = Storage("MyStorage", "text")
+        self.storages = [default_storage]
 
     def build(self):
         self.root.ids.folders_tree.bind(minimum_height=self.root.ids.folders_tree.setter('height'))
         self.root.ids.note_bar.bind(minimum_height=self.root.ids.note_bar.setter('height'))
 
-        self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
-        self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
-        self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
+        for each in self.storages:
+            self.populate_tree_view(self.root.ids.folders_tree, None, each.root_folder)
 
-    def tree(self):
-        root = ThemeFolders("MyStorage1", 0)
-        ansible = ThemeFolders("Ansible", 1, parent=root)
-        redhat = ThemeFolders("RedHat", 2, parent=root)
-        proglang = ThemeFolders("Programming", 30, parent=root)
-        go = ThemeFolders("GO", 31, parent=proglang)
-        python = ThemeFolders("Python", 32, parent=proglang)
-        rust = ThemeFolders("Rust", 33, parent=proglang)
-        return root
+    def add_new_folder(self, parent_id, folder_name):
+        print(parent_id)
+        storage = ""
+        for folder in storage.root_folder:
+            if folder.id == parent_id:
+                ThemeFolders(folder_name, parent=folder)
+
+    #    self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
+    #   self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
+    #  self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
+
+    # def tree(self):
+     #    root = ThemeFolders("MyStorage1", 0)
+    #     ansible = ThemeFolders("Ansible", 1, parent=root)
+    #     redhat = ThemeFolders("RedHat", 2, parent=root)
+    #     proglang = ThemeFolders("Programming", 30, parent=root)
+    #     go = ThemeFolders("GO", 31, parent=proglang)
+    #     python = ThemeFolders("Python", 32, parent=proglang)
+    #     rust = ThemeFolders("Rust", 33, parent=proglang)
+    #     return root
 
     def populate_tree_view(self, tree_view, parent, node):
         if parent is None:
@@ -208,9 +230,6 @@ class NotesApp(App):
         note_butt.bind(state=self.button_selection)
         self.root.ids.note_bar.add_widget(note_butt)
 
-    def add_new_folder(self):
-        print('test')
-
     def KV_title_focused(self, focused):
         if focused:
             # Create new note and button
@@ -274,4 +293,5 @@ class NotesApp(App):
 #       3. Autosave by idle time
 
 if __name__ == "__main__":
-    NotesApp().run()
+    Notes = NotesApp()
+    Notes.run()
