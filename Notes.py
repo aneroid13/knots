@@ -4,7 +4,7 @@
 # gcc -Os -fPIC -D MS_WIN64 ./cyton/Notes.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o pro_notes  #Win
 
 import time, uuid
-from anytree import NodeMixin, RenderTree
+import anytree
 from inspect import getmembers as gm
 from pprint import pprint as pp
 from kivy.app import App
@@ -73,10 +73,10 @@ class Storage:
     def __init__(self, Name, Type):
         self.name = Name
         self.id = uuid.uuid4().hex
-        self.root_folder = ThemeFolders(self.name, str(uuid.uuid4()))
+        self.root_folder = ThemeFolders(self.name)
         self.type = Type
 
-class ThemeFolders(NodeMixin):  # Add Node feature
+class ThemeFolders(anytree.NodeMixin):  # Add Node feature
     def __init__(self, name, parent=None, children=None):
         self.name = name
         self.id = str(uuid.uuid4())
@@ -109,6 +109,8 @@ class TreeView_NewFolderInput(BoxLayout, TreeViewNode):
         parent_folder_id = super().parent_node.folder_id
         Notes.add_new_folder(parent_folder_id, txt_item.text)
 
+        Notes.remove_enter_folder(self.txtinp)
+
 class NotesApp(App):
     title = "Notes"
     atlas_path = 'atlas://images/default/default'
@@ -132,11 +134,17 @@ class NotesApp(App):
             self.populate_tree_view(self.root.ids.folders_tree, None, each.root_folder)
 
     def add_new_folder(self, parent_id, folder_name):
-        print(parent_id)
-        storage = ""
-        for folder in storage.root_folder:
-            if folder.id == parent_id:
-                ThemeFolders(folder_name, parent=folder)
+        for stor in self.storages:
+            if stor.name == "MyStorage":
+                storage = stor
+        parent_folder = anytree.find_by_attr(storage.root_folder, name="id", value=parent_id)
+        ThemeFolders(folder_name, parent=parent_folder)
+        print(parent_folder.name)
+
+    def remove_enter_folder(self, treenode):
+        self.root.ids.folders_tree.remove_node(treenode)
+        self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
+
 
     #    self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
     #   self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
@@ -286,6 +294,7 @@ class NotesApp(App):
 
     def KV_button_add_folder(self, treenode):
         self.root.ids.folders_tree.add_node(TreeView_NewFolderInput("New folder"), parent=treenode)
+
 
 
 #TODO:  1. on exit save note to bank
