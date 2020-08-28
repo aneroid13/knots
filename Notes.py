@@ -7,6 +7,7 @@ import time, uuid
 import anytree
 from inspect import getmembers as gm
 from pprint import pprint as pp
+from functools import partial
 from kivy.app import App
 from kivy.config import Config
 from kivy.atlas import Atlas
@@ -99,17 +100,28 @@ class TreeView_Folder(TreeViewLabel):
         super(TreeView_Folder, self).__init__(**kwargs)
 
 class TreeView_NewFolderInput(BoxLayout, TreeViewNode):
-    def __init__(self, msg, **kwargs):
+    def __init__(self, msg, treenode=None, rename=False, **kwargs):
         super(TreeView_NewFolderInput, self).__init__(**kwargs)
+        self.associated_treenode = treenode
+        self.height = 32
         self.txtinp = TextInput(text=msg, multiline=False)
-        self.txtinp.bind(on_text_validate=self.add_new_folder)
+        if not rename:
+            self.txtinp.bind(on_text_validate=self.add_new_folder)
+            self.txtinp.bind(on_focus=self.add_new_folder)
+        else:
+            self.txtinp.bind(on_text_validate=partial(self.rename_folder, folder_id=treenode.folder_id))
+            self.txtinp.bind(on_focus=partial(self.rename_folder, folder_id=treenode.folder_id))
         self.add_widget(self.txtinp)
 
     def add_new_folder(self, txt_item):
-        parent_folder_id = super().parent_node.folder_id
-        Notes.add_new_folder(parent_folder_id, txt_item.text)
+        parent_folder = super().parent_node
+        Notes.add_entered_folder(parent_folder, txt_item.text)
+        Notes.remove_textinput(self)
 
-        Notes.remove_enter_folder(self.txtinp)
+    def rename_folder(self, txt_item, folder_id):
+        self.associated_treenode.text = self.txtinp.text
+        Notes.rename_entered_folder(txt_item.text, folder_id)
+        Notes.remove_textinput(self)
 
 class NotesApp(App):
     title = "Notes"
@@ -133,32 +145,24 @@ class NotesApp(App):
         for each in self.storages:
             self.populate_tree_view(self.root.ids.folders_tree, None, each.root_folder)
 
-    def add_new_folder(self, parent_id, folder_name):
+    def add_entered_folder(self, parent, folder_name):
         for stor in self.storages:
             if stor.name == "MyStorage":
                 storage = stor
-        parent_folder = anytree.find_by_attr(storage.root_folder, name="id", value=parent_id)
-        ThemeFolders(folder_name, parent=parent_folder)
-        print(parent_folder.name)
+        parent_folder = anytree.find_by_attr(storage.root_folder, name="id", value=parent.folder_id)
+        current_folder = ThemeFolders(folder_name, parent=parent_folder)
 
-    def remove_enter_folder(self, treenode):
+        self.populate_tree_view(self.root.ids.folders_tree, parent, current_folder)
+
+    def rename_entered_folder(self, folder_name, folder_id):
+        for stor in self.storages:
+            if stor.name == "MyStorage":
+                storage = stor
+        current_folder = anytree.find_by_attr(storage.root_folder, name="id", value=folder_id)
+        current_folder.name = folder_name
+
+    def remove_textinput(self, treenode):
         self.root.ids.folders_tree.remove_node(treenode)
-        self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
-
-
-    #    self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
-    #   self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
-    #  self.populate_tree_view(self.root.ids.folders_tree, None, self.tree())
-
-    # def tree(self):
-     #    root = ThemeFolders("MyStorage1", 0)
-    #     ansible = ThemeFolders("Ansible", 1, parent=root)
-    #     redhat = ThemeFolders("RedHat", 2, parent=root)
-    #     proglang = ThemeFolders("Programming", 30, parent=root)
-    #     go = ThemeFolders("GO", 31, parent=proglang)
-    #     python = ThemeFolders("Python", 32, parent=proglang)
-    #     rust = ThemeFolders("Rust", 33, parent=proglang)
-    #     return root
 
     def populate_tree_view(self, tree_view, parent, node):
         if parent is None:
@@ -295,7 +299,8 @@ class NotesApp(App):
     def KV_button_add_folder(self, treenode):
         self.root.ids.folders_tree.add_node(TreeView_NewFolderInput("New folder"), parent=treenode)
 
-
+    def KV_button_rename_folder(self, treenode):
+        self.root.ids.folders_tree.add_node(TreeView_NewFolderInput(treenode.text, treenode=treenode, rename=True))
 
 #TODO:  1. on exit save note to bank
 #       2. save bank to file

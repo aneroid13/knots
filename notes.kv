@@ -55,7 +55,8 @@ BoxLayout:
                                 on_release: if hasattr(folders_tree.selected_node, "folder_id") : app.KV_button_add_folder(folders_tree.selected_node)
                             Button:
                                 size: (24, 24)
-                                text: "-"
+                                text: "R"
+                                on_release: if hasattr(folders_tree.selected_node, "folder_id") : app.KV_button_rename_folder(folders_tree.selected_node)
                         ScrollView:
                             do_scroll_x: False
                             size_hint: 1, 1
