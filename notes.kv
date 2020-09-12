@@ -20,7 +20,7 @@ BoxLayout:
                     text: 'New storage'
                     size_hint_y: None
                     height: '32dp'
-                    on_release:
+                    on_release: app.kv_button_test()
 
                 Button:
                     id: settings
@@ -52,11 +52,11 @@ BoxLayout:
                             Button:
                                 size: (24, 24)
                                 text: "+"
-                                on_release: if hasattr(folders_tree.selected_node, "folder_id") : app.KV_button_add_folder(folders_tree.selected_node)
+                                on_release: if hasattr(folders_tree.selected_node, "folder_id") : app.kv_button_add_folder(folders_tree.selected_node)
                             Button:
                                 size: (24, 24)
                                 text: "R"
-                                on_release: if hasattr(folders_tree.selected_node, "folder_id") : app.KV_button_rename_folder(folders_tree.selected_node)
+                                on_release: if hasattr(folders_tree.selected_node, "folder_id") : app.kv_button_rename_folder(folders_tree.selected_node)
                         ScrollView:
                             do_scroll_x: False
                             size_hint: 1, 1
@@ -71,7 +71,7 @@ BoxLayout:
                                 indent_start: 4
                                 indent_level: 7
                                 color_selected: [.5, .10, .15, .8]
-                                on_touch_up: if hasattr(self.selected_node, "folder_id") : app.KV_tree_selected(self.selected_node.folder_id)
+                                on_touch_up: if hasattr(self.selected_node, "folder_id") : app.kv_tree_selected(self.selected_node.folder_id)
 
                 TabbedPanelItem:
                     id: bookmarks
@@ -114,7 +114,7 @@ BoxLayout:
                     multiline: False
                     height: 32
                     focus: True
-                    on_text: app.KV_search_entered()
+                    on_text: app.kv_search_entered()
 
             ScrollView:
                 do_scroll_x: False
@@ -138,8 +138,8 @@ BoxLayout:
                 multiline: False
                 height: '32dp'
                 focus: True
-                on_text: app.KV_title_entered()
-                on_focus: app.KV_title_focused(self.focused)
+                on_text: app.kv_title_entered()
+                on_focus: app.kv_title_focused(self.focused)
 
             Carousel:
                 size_hint: (1, 1)
@@ -150,7 +150,7 @@ BoxLayout:
                 CodeInput:
                     id: code
                     text: ''
-                    on_text: app.KV_code_entered()
+                    on_text: app.kv_code_entered()
 
                 RstDocument:
                     id: viewer
@@ -178,7 +178,7 @@ BoxLayout:
                     size_hint_x: 0 if tags.visible else 1
                     opacity: 0 if tags.visible else 1
                     disabled: tags.visible
-                    on_text_validate: app.KV_tag_added(self.text); self.text = ""
+                    on_text_validate: app.kv_tag_added(self.text); self.text = ""
 
                 Spinner:
                     id: tags
@@ -196,7 +196,7 @@ BoxLayout:
                     width: 32
                     height: 32
                     disabled: True
-                    on_release: app.KV_bookmarked()
+                    on_release: app.kv_bookmarked()
 
                 ToggleButton:
                     id: trash
@@ -205,7 +205,7 @@ BoxLayout:
                     width: 32
                     height: 32
                     disabled: True
-                    on_release: app.KV_trashed()
+                    on_release: app.kv_trashed()
 
 <ColoredBL@BoxLayout>
     canvas.before:

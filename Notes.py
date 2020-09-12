@@ -3,8 +3,7 @@
 # gcc -Os -fPIC ./cyton/Notes.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o pro_notes  #Linux
 # gcc -Os -fPIC -D MS_WIN64 ./cyton/Notes.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o pro_notes  #Win
 
-import time, uuid
-import anytree
+import time, uuid, anytree
 from inspect import getmembers as gm
 from pprint import pprint as pp
 from functools import partial
@@ -17,20 +16,22 @@ from kivy.uix.togglebutton import ToggleButton as button, Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
+from modules.filesystem import KnotsStore   #importlib
 
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
-Config.set('kivy', 'log_level', 'debug')  # string, one of ‘trace’, ‘debug’, ‘info’, ‘warning’, ‘error’ or ‘critical’
+Config.set('kivy', 'log_level', 'warning')  # string, one of ‘trace’, ‘debug’, ‘info’, ‘warning’, ‘error’ or ‘critical’
 
-class Note:
+
+class NoteInfo:
     def __init__(self):
         self.id = str(uuid.uuid4())
         self.create_time = time.time()
         self.update_time = time.time()
         self.title = ""
-        self.text = ""
+    #    self.text = ""
         self.codetype = ""
         self.tags = []
         self.folder_id = None
@@ -49,26 +50,44 @@ class Note:
     def add_tag(self, tag):
         self.tags.append(tag)
 
+
 class NoteBank:
     def __init__(self):
-        self.bank = {}
+        self.info_bank = {}
+        self.text_bank = {}
+        self.storemetod = KnotsStore()
 
-    def add_note(self, note):
-        self.bank[note.id] = note
+    def add_noteinfo(self, note):
+        self.info_bank[note.id] = note
         return note.id
 
-    def get_note(self, id):
-        return self.bank[str(id)]
+    def get_noteinfo(self, id: str):
+        return self.info_bank[str(id)]
 
-    def get_notes_by_folder(self, folder_id):
+    def add_notetext(self, id: str, text: str):
+        self.text_bank[id] = text
+
+    def get_notetext(self, id: str):
+        if id not in self.text_bank:
+            self.text_bank[id] = self.storemetod.load_text(id)
+        return self.text_bank[str(id)]
+
+    def get_notes_by_folder(self, folder_id: str):
         folder_notes = []
-        for note in self.bank.values():
+        for note in self.info_bank.values():
             if note.folder_id == folder_id:
                 folder_notes.append(note)
         return folder_notes
 
-    # def update_note(self):
-    #     pass
+    def save_notes_text(self):
+        self.storemetod.save_text(self.text_bank)
+
+    def save_notes_info(self):
+        self.storemetod.save_info(self.info_bank)
+
+    def load_notes_info(self):
+        self.storemetod.load_info()
+
 
 class Storage:
     def __init__(self, Name, Type):
@@ -77,6 +96,7 @@ class Storage:
         self.root_folder = ThemeFolders(self.name)
         self.type = Type
 
+
 class ThemeFolders(anytree.NodeMixin):  # Add Node feature
     def __init__(self, name, parent=None, children=None):
         self.name = name
@@ -84,6 +104,7 @@ class ThemeFolders(anytree.NodeMixin):  # Add Node feature
         self.parent = parent
         if children:
             self.children = children
+
 
 class TreeView_LabelButt(BoxLayout, TreeViewNode):
     def __init__(self, msg, **kwargs):
@@ -94,10 +115,12 @@ class TreeView_LabelButt(BoxLayout, TreeViewNode):
         self.add_widget(self.label)
         self.add_widget(self.butt)
 
+
 class TreeView_Folder(TreeViewLabel):
     def __init__(self, folder_id, **kwargs):
         self.folder_id = folder_id
         super(TreeView_Folder, self).__init__(**kwargs)
+
 
 class TreeView_NewFolderInput(BoxLayout, TreeViewNode):
     def __init__(self, msg, treenode=None, rename=False, **kwargs):
@@ -123,6 +146,7 @@ class TreeView_NewFolderInput(BoxLayout, TreeViewNode):
         Notes.rename_entered_folder(txt_item.text, folder_id)
         Notes.remove_textinput(self)
 
+
 class NotesApp(App):
     title = "Notes"
     atlas_path = 'atlas://images/default/default'
@@ -134,6 +158,7 @@ class NotesApp(App):
         self.bank = NoteBank()
         self.current_folder_id = '0'
         self.current_note = None
+        self.current_text = None
         self.current_note_button = None
         default_storage = Storage("MyStorage", "text")
         self.storages = [default_storage]
@@ -189,7 +214,7 @@ class NotesApp(App):
             self.root.ids.trash.state = 'normal'
         else:
             self.root.ids.title.text = self.current_note.title
-            self.root.ids.code.text = self.current_note.text
+            self.root.ids.code.text = self.current_text
             self.root.ids.tags.values = self.current_note.tags
             self.root.ids.tags.text = "tags"
             self.root.ids.bookmark.disabled = False
@@ -206,17 +231,21 @@ class NotesApp(App):
     def button_selection(self, instance, pos):
         if pos == 'normal' and \
            str(instance.id) == str(self.current_note_button.id):  # TODO: fix broken: crash on click
-            self.bank.add_note(self.current_note)
+            self.bank.add_noteinfo(self.current_note)
+            self.bank.add_notetext(self.current_note.id, self.current_text)
             self.current_note_button = None
             self.current_note = None
+            self.current_text = None
         if pos == 'down':
             self.current_note_button = instance
-            self.current_note = self.bank.get_note(instance.id)
+            self.current_note = self.bank.get_noteinfo(instance.id)
+            self.current_text = self.bank.get_notetext(instance.id)
 
         self.init_notes_widgets()
 
     def create_new_note(self):
-        self.current_note = Note()
+        self.current_note = NoteInfo()
+        self.current_text = ""
         self.current_note.folder_id = self.current_folder_id
         self.add_note_on_bar(self.current_note.id, "", True)
         self.find_current_button()
@@ -242,7 +271,7 @@ class NotesApp(App):
         note_butt.bind(state=self.button_selection)
         self.root.ids.note_bar.add_widget(note_butt)
 
-    def KV_title_focused(self, focused):
+    def kv_title_focused(self, focused):
         if focused:
             # Create new note and button
             if self.root.ids.title.text == "" and not self.current_note_button:
@@ -253,29 +282,30 @@ class NotesApp(App):
                 self.root.ids.note_bar.remove_widget(self.current_note_button)
                 self.current_note_button = None
                 self.current_note = None
+                self.current_text = None
 
-    def KV_bookmarked(self):
+    def kv_bookmarked(self):
         self.current_note.KV_bookmarked()
 
-    def KV_trashed(self):
+    def kv_trashed(self):
         self.current_note.KV_trashed()
 
-    def KV_tag_added(self, text):
+    def kv_tag_added(self, text):
         self.current_note.add_tag(str(text))
         self.root.ids.tags.values = self.current_note.tags
 
-    def KV_title_entered(self):
+    def kv_title_entered(self):
         if self.root.ids.title.text:
             self.current_note.title = self.root.ids.title.text
             self.current_note_button.text = self.root.ids.title.text
             self.current_note.update_time = time.time()
 
-    def KV_code_entered(self):
+    def kv_code_entered(self):
         if self.current_note:
-            self.current_note.text = self.root.ids.code.text
+            self.current_text = self.root.ids.code.text
             self.current_note.update_time = time.time()
 
-    def KV_search_entered(self):
+    def kv_search_entered(self):
         for butt in self.root.ids.note_bar.children:
             if self.root.ids.search.text not in butt.text:
                 butt.opacity = 0.2
@@ -284,10 +314,12 @@ class NotesApp(App):
                 butt.opacity = 1
                 butt.disable = False
 
-    def KV_tree_selected(self, treenode_id):
+    def kv_tree_selected(self, treenode_id):
         if self.current_note:
-            self.bank.add_note(self.current_note)
+            self.bank.add_noteinfo(self.current_note)
+            self.bank.add_notetext(self.current_note.id, self.current_text)
             self.current_note = None
+            self.current_text = None
             self.current_note_button = None
             self.init_notes_widgets()
 
@@ -296,11 +328,15 @@ class NotesApp(App):
         for note in self.bank.get_notes_by_folder(self.current_folder_id):  # fill note_bar
             self.add_note_on_bar(note.id, note.title, False)
 
-    def KV_button_add_folder(self, treenode):
+    def kv_button_add_folder(self, treenode):
         self.root.ids.folders_tree.add_node(TreeView_NewFolderInput("New folder"), parent=treenode)
 
-    def KV_button_rename_folder(self, treenode):
+    def kv_button_rename_folder(self, treenode):
         self.root.ids.folders_tree.add_node(TreeView_NewFolderInput(treenode.text, treenode=treenode, rename=True))
+
+    def kv_button_test(self):
+        self.bank.save_notes_info()
+        self.bank.save_notes_text()
 
 #TODO:  1. on exit save note to bank
 #       2. save bank to file
