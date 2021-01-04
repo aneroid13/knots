@@ -4,6 +4,8 @@
 # gcc -Os -fPIC -D MS_WIN64 ./cyton/Notes.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o pro_notes  #Win
 
 import time, uuid, anytree
+from anytree.importer import JsonImporter as TreeImporter
+from anytree.exporter import JsonExporter as TreeExporter
 from inspect import getmembers as gm
 from pprint import pprint as pp
 from functools import partial
@@ -85,16 +87,26 @@ class NoteBank:
     def save_notes_info(self):
         self.storemetod.save_info(self.info_bank)
 
+    def save_tree(self, tree):
+        self.storemetod.save_tree(tree)
+
     def load_notes_info(self):
-        self.storemetod.load_info()
+        return self.storemetod.load_info()
+
+    def load_tree(self):
+        return self.storemetod.load_tree()
 
 
 class Storage:
     def __init__(self, Name, Type):
         self.name = Name
         self.id = uuid.uuid4().hex
-        self.root_folder = ThemeFolders(self.name)
         self.type = Type
+        if NoteBank().load_tree():
+            data = NoteBank().load_tree()
+            self.root_folder = TreeImporter().import_(data)
+        else:
+            self.root_folder = ThemeFolders(self.name)
 
 
 class ThemeFolders(anytree.NodeMixin):  # Add Node feature
@@ -335,8 +347,12 @@ class NotesApp(App):
         self.root.ids.folders_tree.add_node(TreeView_NewFolderInput(treenode.text, treenode=treenode, rename=True))
 
     def kv_button_test(self):
-        self.bank.save_notes_info()
-        self.bank.save_notes_text()
+ #       self.bank.save_notes_info()
+#        self.bank.save_notes_text()
+        for stor in self.storages:
+            if stor.name == "MyStorage":
+                exp = TreeExporter(indent=2, sort_keys=True)
+                self.bank.save_tree(exp.export(stor.root_folder))
 
 #TODO:  1. on exit save note to bank
 #       2. save bank to file

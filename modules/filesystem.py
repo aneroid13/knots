@@ -6,6 +6,7 @@ class KnotsStore:
         self.path = Path.home().joinpath(".knots")
         self.textpath = self.path.joinpath("text")
         self.info_file = self.path.joinpath("notes.json")
+        self.tree_file = self.path.joinpath("tree.json")
         self.check()
 
     def check(self):
@@ -33,6 +34,19 @@ class KnotsStore:
             f_text = open(str(self.textpath.joinpath(str(key) + ".txt")), "w")
             f_text.write(str(value))
             f_text.close()
+
+    def save_tree(self, tree):
+        f_info = open(str(self.tree_file), "w")
+        f_info.write(str(tree))
+        f_info.close()
+
+    def load_tree(self):
+        if not self.tree_file.exists():
+            return None
+        f = open(str(self.tree_file), "r")
+        tree = str(f.read())
+        f.close()
+        return tree
 
     def load_info(self):
         f = open(str(self.info_file), "r")
