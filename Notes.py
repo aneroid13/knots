@@ -52,12 +52,32 @@ class NoteInfo:
     def add_tag(self, tag):
         self.tags.append(tag)
 
+    def import_info(self, imp_dict ):
+        self.id = imp_dict['id']
+        self.create_time = imp_dict['create_time']
+        self.update_time = imp_dict['update_time']
+        self.title = imp_dict['title']
+        self.codetype = imp_dict['codetype']
+        self.tags = imp_dict['tags']
+        self.folder_id = imp_dict['folder_id']
+        self.bookmark = imp_dict['bookmark']
+        self.trash = imp_dict['trash']
+        return self
 
 class NoteBank:
     def __init__(self):
         self.info_bank = {}
         self.text_bank = {}
         self.storemetod = KnotsStore()
+        self.init_bank()
+        for each in self.info_bank:
+            pp(each)
+
+    def init_bank(self):
+        bankdata = self.storemetod.load_info()
+        if bankdata:
+            for note in bankdata:
+                self.info_bank[note['id']] = NoteInfo().import_info(note)
 
     def add_noteinfo(self, note):
         self.info_bank[note.id] = note
@@ -90,9 +110,6 @@ class NoteBank:
     def save_tree(self, tree):
         self.storemetod.save_tree(tree)
 
-    def load_notes_info(self):
-        return self.storemetod.load_info()
-
     def load_tree(self):
         return self.storemetod.load_tree()
 
@@ -102,9 +119,10 @@ class Storage:
         self.name = Name
         self.id = uuid.uuid4().hex
         self.type = Type
-        if NoteBank().load_tree():
-            data = NoteBank().load_tree()
-            self.root_folder = TreeImporter().import_(data)
+        self.bank = NoteBank()
+        tree_data = self.bank.load_tree()
+        if tree_data:
+            self.root_folder = TreeImporter().import_(tree_data)
         else:
             self.root_folder = ThemeFolders(self.name)
 
@@ -167,12 +185,12 @@ class NotesApp(App):
 
     def __init__(self):
         super().__init__()
-        self.bank = NoteBank()
         self.current_folder_id = '0'
         self.current_note = None
         self.current_text = None
         self.current_note_button = None
         default_storage = Storage("MyStorage", "text")
+        self.bank = default_storage.bank
         self.storages = [default_storage]
 
     def build(self):
@@ -354,9 +372,15 @@ class NotesApp(App):
                 exp = TreeExporter(indent=2, sort_keys=True)
                 self.bank.save_tree(exp.export(stor.root_folder))
 
-#TODO:  1. on exit save note to bank
-#       2. save bank to file
-#       3. Autosave by idle time
+    def on_stop(self):
+        self.bank.save_notes_info()
+        self.bank.save_notes_text()
+        for stor in self.storages:
+            if stor.name == "MyStorage":
+                exp = TreeExporter(indent=2, sort_keys=True)
+                self.bank.save_tree(exp.export(stor.root_folder))
+
+#TODO:  1. Autosave by idle time
 
 if __name__ == "__main__":
     Notes = NotesApp()
