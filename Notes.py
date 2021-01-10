@@ -18,7 +18,8 @@ from kivy.uix.togglebutton import ToggleButton as button, Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
-from modules.filesystem import KnotsStore   #importlib
+#from modules.filesystem import KnotsStore   #importlib
+from modules.shelf import KnotsStore   #importlib
 
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
@@ -52,7 +53,7 @@ class NoteInfo:
     def add_tag(self, tag):
         self.tags.append(tag)
 
-    def import_info(self, imp_dict ):
+    def import_info(self, imp_dict):
         self.id = imp_dict['id']
         self.create_time = imp_dict['create_time']
         self.update_time = imp_dict['update_time']
@@ -66,18 +67,42 @@ class NoteInfo:
 
 class NoteBank:
     def __init__(self):
+        self.currnet_note_id = ""
         self.info_bank = {}
         self.text_bank = {}
         self.storemetod = KnotsStore()
         self.init_bank()
-        for each in self.info_bank:
-            pp(each)
 
     def init_bank(self):
         bankdata = self.storemetod.load_info()
         if bankdata:
-            for note in bankdata:
-                self.info_bank[note['id']] = NoteInfo().import_info(note)
+            self.info_bank = bankdata
+        #     for note in bankdata:
+        #         self.info_bank[note['id']] = NoteInfo().import_info(note)
+
+    def new_note(self):
+        note = {
+                'id': str(uuid.uuid4()),
+                'create_time': time.time(),
+                'update_time': time.time(),
+                'title': "",
+                'codetype': "",
+                'tags': [],
+                'folder_id': None,
+                'bookmark': False,
+                'trash': False,
+                }
+        self.currnet_note_id = note.id
+        self.add_noteinfo(note)
+
+    def bookmarked(self):
+        self.info_bank[self.currnet_note_id]['bookmark'] = not self.info_bank[self.currnet_note_id]['bookmark']
+
+    def trashed(self):
+        self.info_bank[self.currnet_note_id]['trash'] = not self.info_bank[self.currnet_note_id]['trash']
+
+    def add_tag(self, tag):
+        self.info_bank[self.currnet_note_id]['tags'].append(tag)
 
     def add_noteinfo(self, note):
         self.info_bank[note.id] = note
