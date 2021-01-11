@@ -74,12 +74,9 @@ class NoteInfo:
 
 class NoteBank:
     def __init__(self):
-        self.info_bank = {}
-        self.text_bank = {}
         self.storemetod = KnotsStore()
-        self.init_bank()
-
-    def init_bank(self):
+        self.text_bank = {}
+        self.info_bank = {}
         bankdata = self.storemetod.load_info()
         if bankdata:
             self.info_bank = bankdata
@@ -301,13 +298,13 @@ class NotesApp(App):
                 self.current.new()
 
     def kv_bookmarked(self):
-        self.current.note.bookmarked()
+        self.current.bookmarked()
 
     def kv_trashed(self):
-        self.current.note.trashed()
+        self.current.trashed()
 
     def kv_tag_added(self, text):
-        self.current.note.add_tag(str(text))
+        self.current.add_tag(str(text))
         self.root.ids.tags.values = self.current.note['tags']
 
     def kv_title_entered(self):
