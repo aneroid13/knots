@@ -18,8 +18,8 @@ from kivy.uix.togglebutton import ToggleButton as button, Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
-#from modules.filesystem import KnotsStore   #importlib
-from modules.shelf import KnotsStore   #importlib
+from modules.filesystem import KnotsStore   #importlib
+#from modules.shelf import KnotsStore   #importlib
 
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
@@ -30,58 +30,9 @@ Config.set('kivy', 'log_level', 'warning')  # string, one of ‘trace’, ‘deb
 
 class NoteInfo:
     def __init__(self):
-        self.id = str(uuid.uuid4())
-        self.create_time = time.time()
-        self.update_time = time.time()
-        self.title = ""
-    #    self.text = ""
-        self.codetype = ""
-        self.tags = []
-        self.folder_id = None
-        self.bookmark = False
-        self.trash = False
-
-    def get_id(self):
-        return self.id
-
-    def bookmarked(self):
-        self.bookmark = not self.bookmark
-
-    def trashed(self):
-        self.trash = not self.trash
-
-    def add_tag(self, tag):
-        self.tags.append(tag)
-
-    def import_info(self, imp_dict):
-        self.id = imp_dict['id']
-        self.create_time = imp_dict['create_time']
-        self.update_time = imp_dict['update_time']
-        self.title = imp_dict['title']
-        self.codetype = imp_dict['codetype']
-        self.tags = imp_dict['tags']
-        self.folder_id = imp_dict['folder_id']
-        self.bookmark = imp_dict['bookmark']
-        self.trash = imp_dict['trash']
-        return self
-
-class NoteBank:
-    def __init__(self):
-        self.currnet_note_id = ""
-        self.info_bank = {}
-        self.text_bank = {}
-        self.storemetod = KnotsStore()
-        self.init_bank()
-
-    def init_bank(self):
-        bankdata = self.storemetod.load_info()
-        if bankdata:
-            self.info_bank = bankdata
-        #     for note in bankdata:
-        #         self.info_bank[note['id']] = NoteInfo().import_info(note)
-
-    def new_note(self):
-        note = {
+        self.button = None
+        self.text = ""
+        self.note = {
                 'id': str(uuid.uuid4()),
                 'create_time': time.time(),
                 'update_time': time.time(),
@@ -92,24 +43,53 @@ class NoteBank:
                 'bookmark': False,
                 'trash': False,
                 }
-        self.currnet_note_id = note.id
-        self.add_noteinfo(note)
+
+    def new(self):
+        self.__init__()
+
+    def set_button(self, butt):
+        self.button = butt
+
+    def get_id(self):
+        return self.note['id']
+
+    def get_bookmark(self):
+        return self.note['bookmark']
 
     def bookmarked(self):
-        self.info_bank[self.currnet_note_id]['bookmark'] = not self.info_bank[self.currnet_note_id]['bookmark']
+        self.note['bookmark'] = not self.note['bookmark']
+
+    def get_trash(self):
+        return self.note['trash']
 
     def trashed(self):
-        self.info_bank[self.currnet_note_id]['trash'] = not self.info_bank[self.currnet_note_id]['trash']
+        self.note['trash'] = not self.note['trash']
 
     def add_tag(self, tag):
-        self.info_bank[self.currnet_note_id]['tags'].append(tag)
+        self.note['tags'].append(tag)
+
+    def update_time(self):
+        self.note['update_time'] = time.time()
+
+
+class NoteBank:
+    def __init__(self):
+        self.info_bank = {}
+        self.text_bank = {}
+        self.storemetod = KnotsStore()
+        self.init_bank()
+
+    def init_bank(self):
+        bankdata = self.storemetod.load_info()
+        if bankdata:
+            self.info_bank = bankdata
 
     def add_noteinfo(self, note):
-        self.info_bank[note.id] = note
-        return note.id
+        self.info_bank[note['id']] = note
+        return note['id']
 
     def get_noteinfo(self, id: str):
-        return self.info_bank[str(id)]
+        return self.info_bank[id]
 
     def add_notetext(self, id: str, text: str):
         self.text_bank[id] = text
@@ -117,12 +97,12 @@ class NoteBank:
     def get_notetext(self, id: str):
         if id not in self.text_bank:
             self.text_bank[id] = self.storemetod.load_text(id)
-        return self.text_bank[str(id)]
+        return self.text_bank[id]
 
     def get_notes_by_folder(self, folder_id: str):
         folder_notes = []
         for note in self.info_bank.values():
-            if note.folder_id == folder_id:
+            if note['folder_id'] == folder_id:
                 folder_notes.append(note)
         return folder_notes
 
@@ -210,13 +190,11 @@ class NotesApp(App):
 
     def __init__(self):
         super().__init__()
-        self.current_folder_id = '0'
-        self.current_note = None
-        self.current_text = None
-        self.current_note_button = None
         default_storage = Storage("MyStorage", "text")
         self.bank = default_storage.bank
         self.storages = [default_storage]
+        self.current = NoteInfo()
+        self.current_folder_id = '0'
 
     def build(self):
         self.root.ids.folders_tree.bind(minimum_height=self.root.ids.folders_tree.setter('height'))
@@ -253,59 +231,44 @@ class NotesApp(App):
         for child_node in node.children:
             self.populate_tree_view(tree_view, tree_node, child_node)
 
-    def find_current_button(self):
-        for child in self.root.ids.note_bar.children:
-            if str(child.id) == str(self.current_note.id):
-                self.current_note_button = child
-
     def init_notes_widgets(self):
-        if not self.current_note:
-            self.root.ids.title.text = ""
-            self.root.ids.code.text = ""
-            self.root.ids.tags.values = []
-            self.root.ids.bookmark.disabled = True
-            self.root.ids.trash.disabled = True
-            self.root.ids.bookmark.state = 'normal'
-            self.root.ids.trash.state = 'normal'
+        self.root.ids.title.text = self.current.note['title']
+        self.root.ids.code.text = self.current.text
+        self.root.ids.tags.values = self.current.note['tags']
+        self.root.ids.tags.text = "tags"
+        self.root.ids.bookmark.disabled = False
+        self.root.ids.trash.disabled = False
+        if self.current.get_bookmark():
+            self.root.ids.bookmark.state = 'down'
         else:
-            self.root.ids.title.text = self.current_note.title
-            self.root.ids.code.text = self.current_text
-            self.root.ids.tags.values = self.current_note.tags
-            self.root.ids.tags.text = "tags"
-            self.root.ids.bookmark.disabled = False
-            self.root.ids.trash.disabled = False
-            if self.current_note.bookmark:
-                self.root.ids.bookmark.state = 'down'
-            else:
-                self.root.ids.bookmark.state = 'normal'
-            if self.current_note.trash:
-                self.root.ids.trash.state = 'down'
-            else:
-                self.root.ids.trash.state = 'normal'
+            self.root.ids.bookmark.state = 'normal'
+        if self.current.get_trash():
+            self.root.ids.trash.state = 'down'
+        else:
+            self.root.ids.trash.state = 'normal'
 
     def button_selection(self, instance, pos):
         if pos == 'normal' and \
-           str(instance.id) == str(self.current_note_button.id):  # TODO: fix broken: crash on click
-            self.bank.add_noteinfo(self.current_note)
-            self.bank.add_notetext(self.current_note.id, self.current_text)
-            self.current_note_button = None
-            self.current_note = None
-            self.current_text = None
+           str(instance.id) == str(self.current.get_id()):  # TODO: fix broken: crash on click
+            self.bank.add_noteinfo(self.current.note)
+            self.bank.add_notetext(self.current.get_id(), self.current.text)
+            self.current.new()
+
         if pos == 'down':
-            self.current_note_button = instance
-            self.current_note = self.bank.get_noteinfo(instance.id)
-            self.current_text = self.bank.get_notetext(instance.id)
+            self.current.button = instance
+            self.current.note = self.bank.get_noteinfo(instance.id)
+            self.current.text = self.bank.get_notetext(instance.id)
 
         self.init_notes_widgets()
 
     def create_new_note(self):
-        self.current_note = NoteInfo()
-        self.current_text = ""
-        self.current_note.folder_id = self.current_folder_id
-        self.add_note_on_bar(self.current_note.id, "", True)
-        self.find_current_button()
+        self.current.note['folder_id'] = self.current_folder_id
+        self.add_note_on_bar(self.current.get_id(), "", True)
+        for child in self.root.ids.note_bar.children:
+            if str(child.id) == str(self.current.get_id()):
+                self.current.set_button(child)
 
-        self.root.ids.tags.values = self.current_note.tags
+        self.root.ids.tags.values = self.current.note['tags']
         self.root.ids.bookmark.disabled = False
         self.root.ids.trash.disabled = False
         self.root.ids.bookmark.state = 'normal'
@@ -329,36 +292,33 @@ class NotesApp(App):
     def kv_title_focused(self, focused):
         if focused:
             # Create new note and button
-            if self.root.ids.title.text == "" and not self.current_note_button:
+            if self.root.ids.title.text == "" and not self.current.button:
                 self.create_new_note()
         else:
             # Remove if empty
-            if self.current_note_button and not self.root.ids.title.text:
-                self.root.ids.note_bar.remove_widget(self.current_note_button)
-                self.current_note_button = None
-                self.current_note = None
-                self.current_text = None
+            if self.current.button and not self.root.ids.title.text:
+                self.root.ids.note_bar.remove_widget(self.current.button)
+                self.current.new()
 
     def kv_bookmarked(self):
-        self.current_note.KV_bookmarked()
+        self.current.note.bookmarked()
 
     def kv_trashed(self):
-        self.current_note.KV_trashed()
+        self.current.note.trashed()
 
     def kv_tag_added(self, text):
-        self.current_note.add_tag(str(text))
-        self.root.ids.tags.values = self.current_note.tags
+        self.current.note.add_tag(str(text))
+        self.root.ids.tags.values = self.current.note['tags']
 
     def kv_title_entered(self):
         if self.root.ids.title.text:
-            self.current_note.title = self.root.ids.title.text
-            self.current_note_button.text = self.root.ids.title.text
-            self.current_note.update_time = time.time()
+            self.current.note['title'] = self.root.ids.title.text
+            self.current.button.text = self.root.ids.title.text
+            self.current.update_time()
 
     def kv_code_entered(self):
-        if self.current_note:
-            self.current_text = self.root.ids.code.text
-            self.current_note.update_time = time.time()
+        self.current.text = self.root.ids.code.text
+        self.current.update_time()
 
     def kv_search_entered(self):
         for butt in self.root.ids.note_bar.children:
@@ -370,18 +330,15 @@ class NotesApp(App):
                 butt.disable = False
 
     def kv_tree_selected(self, treenode_id):
-        if self.current_note:
-            self.bank.add_noteinfo(self.current_note)
-            self.bank.add_notetext(self.current_note.id, self.current_text)
-            self.current_note = None
-            self.current_text = None
-            self.current_note_button = None
-            self.init_notes_widgets()
-
+        if self.current.button:
+            self.bank.add_noteinfo(self.current.note)
+            self.bank.add_notetext(self.current.get_id(), self.current.text)
+        self.current.new()
+        self.init_notes_widgets()
         self.current_folder_id = str(treenode_id)
         self.root.ids.note_bar.clear_widgets()  # clear note_bar
         for note in self.bank.get_notes_by_folder(self.current_folder_id):  # fill note_bar
-            self.add_note_on_bar(note.id, note.title, False)
+            self.add_note_on_bar(note['id'], note['title'], False)
 
     def kv_button_add_folder(self, treenode):
         self.root.ids.folders_tree.add_node(TreeView_NewFolderInput("New folder"), parent=treenode)
@@ -390,14 +347,13 @@ class NotesApp(App):
         self.root.ids.folders_tree.add_node(TreeView_NewFolderInput(treenode.text, treenode=treenode, rename=True))
 
     def kv_button_test(self):
- #       self.bank.save_notes_info()
-#        self.bank.save_notes_text()
-        for stor in self.storages:
-            if stor.name == "MyStorage":
-                exp = TreeExporter(indent=2, sort_keys=True)
-                self.bank.save_tree(exp.export(stor.root_folder))
+        pass
 
     def on_stop(self):
+        if self.current.button:
+            self.bank.add_noteinfo(self.current.note)
+            self.bank.add_notetext(self.current.get_id(), self.current.text)
+
         self.bank.save_notes_info()
         self.bank.save_notes_text()
         for stor in self.storages:
@@ -405,7 +361,8 @@ class NotesApp(App):
                 exp = TreeExporter(indent=2, sort_keys=True)
                 self.bank.save_tree(exp.export(stor.root_folder))
 
-#TODO:  1. Autosave by idle time
+# TODO:  1. Auto save by idle time
+
 
 if __name__ == "__main__":
     Notes = NotesApp()

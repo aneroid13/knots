@@ -25,7 +25,7 @@ class KnotsStore:
             # Write note metainfo
             if comma:
                 f_info.write(",")
-            f_info.write(str(json.dumps(value.__dict__, indent=2)))
+            f_info.write(str(json.dumps(value, indent=2)))
             comma = True
         f_info.write("]")
         f_info.close()
@@ -51,6 +51,8 @@ class KnotsStore:
         return tree
 
     def load_info(self):
+        if not self.info_file.exists():
+            return None
         f = open(str(self.info_file), "r")
         notes = str(f.read())
         f.close()
@@ -58,7 +60,11 @@ class KnotsStore:
             notes = json.loads(str(notes))
         except json.decoder.JSONDecodeError as error:
             print(error)
-        return notes
+
+        bank_notes = {}
+        for note in notes:
+            bank_notes[note['id']] = note
+        return bank_notes
 
     def load_text(self, id):
         f = open(str(self.textpath.joinpath(str(id)+".txt")), "r")

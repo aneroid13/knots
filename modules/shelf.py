@@ -1,15 +1,11 @@
-import json
 import shelve
 from pathlib import Path
-from inspect import getmembers as gm
-from pprint import pprint as pp
+
 
 class KnotsStore:
     def __init__(self):
         self.path = Path.home().joinpath(".knots")
         self.shelf_file = self.path.joinpath("notes.shf")
-    #    self.textpath = self.path.joinpath("text.shf")
-    #    self.tree_file = self.path.joinpath("tree.shf")
         self.check()
 
     def check(self): pass
@@ -49,7 +45,9 @@ class KnotsStore:
     def load_text(self, id):
         shelf = shelve.open(self.shelf_file.as_posix())
         if 'text' in shelf:
-            return shelf['text']
+            for each in shelf['text']:
+                print(each)
+            return shelf['text'][id]
         else:
             return None
 
