@@ -18,8 +18,8 @@ from kivy.uix.togglebutton import ToggleButton as button, Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
-from modules.filesystem import KnotsStore   #importlib
-#from modules.shelf import KnotsStore   #importlib
+#from modules.filesystem import KnotsStore   #importlib
+from modules.shelf import KnotsStore   #importlib
 
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
@@ -81,15 +81,12 @@ class NoteBank:
         if bankdata:
             self.info_bank = bankdata
 
-    def add_noteinfo(self, note):
+    def add_note(self, note, text):
         self.info_bank[note['id']] = note
-        return note['id']
+        self.text_bank[note['id']] = text
 
     def get_noteinfo(self, id: str):
         return self.info_bank[id]
-
-    def add_notetext(self, id: str, text: str):
-        self.text_bank[id] = text
 
     def get_notetext(self, id: str):
         if id not in self.text_bank:
@@ -103,10 +100,8 @@ class NoteBank:
                 folder_notes.append(note)
         return folder_notes
 
-    def save_notes_text(self):
+    def save_notes(self):
         self.storemetod.save_text(self.text_bank)
-
-    def save_notes_info(self):
         self.storemetod.save_info(self.info_bank)
 
     def save_tree(self, tree):
@@ -247,8 +242,7 @@ class NotesApp(App):
     def button_selection(self, instance, pos):
         if pos == 'normal' and \
            str(instance.id) == str(self.current.get_id()):  # TODO: fix broken: crash on click
-            self.bank.add_noteinfo(self.current.note)
-            self.bank.add_notetext(self.current.get_id(), self.current.text)
+            self.bank.add_note(self.current.note, self.current.text)
             self.current.new()
 
         if pos == 'down':
@@ -328,8 +322,7 @@ class NotesApp(App):
 
     def kv_tree_selected(self, treenode_id):
         if self.current.button:
-            self.bank.add_noteinfo(self.current.note)
-            self.bank.add_notetext(self.current.get_id(), self.current.text)
+            self.bank.add_note(self.current.note, self.current.text)
         self.current.new()
         self.init_notes_widgets()
         self.current_folder_id = str(treenode_id)
@@ -348,11 +341,9 @@ class NotesApp(App):
 
     def on_stop(self):
         if self.current.button:
-            self.bank.add_noteinfo(self.current.note)
-            self.bank.add_notetext(self.current.get_id(), self.current.text)
+            self.bank.add_note(self.current.note, self.current.text)
 
-        self.bank.save_notes_info()
-        self.bank.save_notes_text()
+        self.bank.save_notes()
         for stor in self.storages:
             if stor.name == "MyStorage":
                 exp = TreeExporter(indent=2, sort_keys=True)

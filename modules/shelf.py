@@ -18,7 +18,9 @@ class KnotsStore:
     def save_text(self, store):
         shelf = shelve.open(self.shelf_file.as_posix())
         if 'text' in shelf:
-            shelf['text'].update(store)
+            text = shelf['text']
+            text.update(store)
+            shelf['text'] = text
         else:
             shelf['text'] = store
         shelf.close()
@@ -45,8 +47,6 @@ class KnotsStore:
     def load_text(self, id):
         shelf = shelve.open(self.shelf_file.as_posix())
         if 'text' in shelf:
-            for each in shelf['text']:
-                print(each)
             return shelf['text'][id]
         else:
             return None
