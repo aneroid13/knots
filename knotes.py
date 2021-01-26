@@ -1,7 +1,7 @@
 # python setup.py build_ext --inplace --embed
 # gcc <C_file_from_cython> -I<include_directory> -L<directory_containing_libpython> -l<name_of_libpython_without_lib_on_the_front> -o <output_file_name>
-# gcc -Os -fPIC ./cyton/Notes.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o pro_notes  #Linux
-# gcc -Os -fPIC -D MS_WIN64 ./cyton/Notes.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o pro_notes  #Win
+# gcc -Os -fPIC ./cyton/knotes.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o knotes  #Linux
+# gcc -Os -fPIC -D MS_WIN64 ./cyton/knotes.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o knotes  #Win
 
 import time, uuid, anytree
 from anytree.importer import JsonImporter as TreeImporter
@@ -18,8 +18,6 @@ from kivy.uix.togglebutton import ToggleButton as button, Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
-from knote_modules.filesystem import KnotsStore   #importlib
-from knote_modules.shelf import KnotsStore   #importlib
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
 
@@ -167,16 +165,16 @@ class TreeView_NewFolderInput(BoxLayout, TreeViewNode):
 
     def add_new_folder(self, txt_item):
         parent_folder = super().parent_node
-        Notes.add_entered_folder(parent_folder, txt_item.text)
-        Notes.remove_textinput(self)
+        knotes.add_entered_folder(parent_folder, txt_item.text)
+        knotes.remove_textinput(self)
 
     def rename_folder(self, txt_item, folder_id):
         self.associated_treenode.text = self.txtinp.text
-        Notes.rename_entered_folder(txt_item.text, folder_id)
-        Notes.remove_textinput(self)
+        knotes.rename_entered_folder(txt_item.text, folder_id)
+        knotes.remove_textinput(self)
 
 
-class NotesApp(App):
+class KNotesApp(App):
     title = "Notes"
     atlas_path = 'atlas://images/default/default'
     #   atlas = Atlas('images/default/default.atlas')
@@ -187,7 +185,7 @@ class NotesApp(App):
 #        default_storage = Storage("MyStorage", "text")
         self.storages = []
         self.storages.append(Storage("MyStorage", "filesystem"))
-        self.storages.append(Storage("MyStorage", "shelf"))
+        self.storages.append(Storage("MyShelf", "shelf"))
         self.bank = self.storages[0].bank
         self.current = NoteInfo()
         self.current_folder_id = '0'
@@ -357,5 +355,5 @@ class NotesApp(App):
 
 
 if __name__ == "__main__":
-    Notes = NotesApp()
-    Notes.run()
+    knotes = KNotesApp()
+    knotes.run()

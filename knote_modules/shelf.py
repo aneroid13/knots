@@ -6,7 +6,7 @@ import plugins
 class KnotsStore:
     def __init__(self):
         self.path = Path.home().joinpath(".knots")
-        self.shelf_file = self.path.joinpath("notes.shf")
+        self.shelf_file = self.path.joinpath("knotes.shf")
         self.check()
 
     def type(self):

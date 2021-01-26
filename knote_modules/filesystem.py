@@ -7,7 +7,7 @@ class KnotsStore:
     def __init__(self):
         self.path = Path.home().joinpath(".knots")
         self.textpath = self.path.joinpath("text")
-        self.info_file = self.path.joinpath("notes.json")
+        self.info_file = self.path.joinpath("knotes.json")
         self.tree_file = self.path.joinpath("tree.json")
         self.check()
 
