@@ -18,11 +18,12 @@ from kivy.uix.togglebutton import ToggleButton as button, Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
-#from modules.filesystem import KnotsStore   #importlib
-from modules.shelf import KnotsStore   #importlib
-
+from knote_modules.filesystem import KnotsStore   #importlib
+from knote_modules.shelf import KnotsStore   #importlib
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
+
+import knote_modules
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Config.set('kivy', 'log_level', 'warning')  # string, one of ‘trace’, ‘debug’, ‘info’, ‘warning’, ‘error’ or ‘critical’
@@ -73,8 +74,9 @@ class NoteInfo:
 
 
 class NoteBank:
-    def __init__(self):
-        self.storemetod = KnotsStore()
+    def __init__(self, type):
+        self.storemetod = knote_modules.storage(plugin=type)
+
         self.text_bank = {}
         self.info_bank = {}
         bankdata = self.storemetod.load_info()
@@ -112,11 +114,11 @@ class NoteBank:
 
 
 class Storage:
-    def __init__(self, Name, Type):
+    def __init__(self, Name, type):
         self.name = Name
         self.id = uuid.uuid4().hex
-        self.type = Type
-        self.bank = NoteBank()
+        self.type = type
+        self.bank = NoteBank(type)
         tree_data = self.bank.load_tree()
         if tree_data:
             self.root_folder = TreeImporter().import_(tree_data)
@@ -182,9 +184,11 @@ class NotesApp(App):
 
     def __init__(self):
         super().__init__()
-        default_storage = Storage("MyStorage", "text")
-        self.bank = default_storage.bank
-        self.storages = [default_storage]
+#        default_storage = Storage("MyStorage", "text")
+        self.storages = []
+        self.storages.append(Storage("MyStorage", "filesystem"))
+        self.storages.append(Storage("MyStorage", "shelf"))
+        self.bank = self.storages[0].bank
         self.current = NoteInfo()
         self.current_folder_id = '0'
 

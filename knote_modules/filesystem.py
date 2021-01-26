@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
+import plugins
 
+@plugins.register
 class KnotsStore:
     def __init__(self):
         self.path = Path.home().joinpath(".knots")
@@ -8,6 +10,9 @@ class KnotsStore:
         self.info_file = self.path.joinpath("notes.json")
         self.tree_file = self.path.joinpath("tree.json")
         self.check()
+
+    def type(self):
+        return "filesystem"
 
     def check(self):
         if not Path(self.path).exists():

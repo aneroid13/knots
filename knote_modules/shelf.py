@@ -1,12 +1,16 @@
 import shelve
 from pathlib import Path
+import plugins
 
-
+@plugins.register
 class KnotsStore:
     def __init__(self):
         self.path = Path.home().joinpath(".knots")
         self.shelf_file = self.path.joinpath("notes.shf")
         self.check()
+
+    def type(self):
+        return "shelf"
 
     def check(self): pass
 
