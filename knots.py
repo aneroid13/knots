@@ -21,7 +21,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
 
-import knote_modules
+import knot_modules
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Config.set('kivy', 'log_level', 'warning')  # string, one of ‘trace’, ‘debug’, ‘info’, ‘warning’, ‘error’ or ‘critical’
@@ -73,7 +73,7 @@ class NoteInfo:
 
 class NoteBank:
     def __init__(self, type):
-        self.storemetod = knote_modules.storage(plugin=type)
+        self.storemetod = knot_modules.storage(plugin=type)
 
         self.text_bank = {}
         self.info_bank = {}
