@@ -1,7 +1,7 @@
 # python setup.py build_ext --inplace --embed
 # gcc <C_file_from_cython> -I<include_directory> -L<directory_containing_libpython> -l<name_of_libpython_without_lib_on_the_front> -o <output_file_name>
-# gcc -Os -fPIC ./cyton/knotes.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o knotes  #Linux
-# gcc -Os -fPIC -D MS_WIN64 ./cyton/knotes.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o knotes  #Win
+# gcc -Os -fPIC ./cyton/knots.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o knots  #Linux
+# gcc -Os -fPIC -D MS_WIN64 ./cyton/knots.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o knots  #Win
 
 import time, uuid, anytree
 from anytree.importer import JsonImporter as TreeImporter
@@ -165,16 +165,16 @@ class TreeView_NewFolderInput(BoxLayout, TreeViewNode):
 
     def add_new_folder(self, txt_item):
         parent_folder = super().parent_node
-        knotes.add_entered_folder(parent_folder, txt_item.text)
-        knotes.remove_textinput(self)
+        knots.add_entered_folder(parent_folder, txt_item.text)
+        knots.remove_textinput(self)
 
     def rename_folder(self, txt_item, folder_id):
         self.associated_treenode.text = self.txtinp.text
-        knotes.rename_entered_folder(txt_item.text, folder_id)
-        knotes.remove_textinput(self)
+        knots.rename_entered_folder(txt_item.text, folder_id)
+        knots.remove_textinput(self)
 
 
-class KNotesApp(App):
+class KnotsApp(App):
     title = "Notes"
     atlas_path = 'atlas://images/default/default'
     #   atlas = Atlas('images/default/default.atlas')
@@ -355,5 +355,5 @@ class KNotesApp(App):
 
 
 if __name__ == "__main__":
-    knotes = KNotesApp()
-    knotes.run()
+    knots = KnotsApp()
+    knots.run()
