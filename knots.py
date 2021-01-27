@@ -175,7 +175,7 @@ class TreeView_NewFolderInput(BoxLayout, TreeViewNode):
 
 
 class KnotsApp(App):
-    title = "Notes"
+    title = "Knots"
     atlas_path = 'atlas://images/default/default'
     #   atlas = Atlas('images/default/default.atlas')
     window = Window

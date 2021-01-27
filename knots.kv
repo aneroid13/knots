@@ -2,129 +2,145 @@ BoxLayout:
     BoxLayout:
         id: one
         orientation: 'horizontal'
-        BoxLayout:
-            width: 134
-            size_hint_x: None
-            orientation: 'vertical'
-            padding: 2
-            spacing: 5
+        Splitter:
+            sizable_from: 'right'
+            sizable_from: 'right'
+            border: (1,1,1,1)
+            strip_size: 2
+            min_size: 150
+            man_size: 200
 
-            GridLayout:
-                rows: 1
-                row_default_height: 32
-                size_hint_y: None
-                height: 32
-
-                Button:
-                    id: new_storage
-                    text: 'New storage'
-                    size_hint_y: None
-                    height: '32dp'
-                    on_release: app.kv_button_test()
-
-                Button:
-                    id: settings
-                    text: 'Settings'
-                    size_hint_y: None
-                    height: '32dp'
-                    on_release:
-
-            TabbedPanel:
-                id: tp
-                size_hint_y: 1
-                do_default_tab: False
-                tab_height: 32
-                tab_width: 32
-                strip_border: [1,1,1,1]
-             #   strip_image: True
-
-                TabbedPanelItem:
-                    id: folders
-                    text: 'FL'
-                    BoxLayout:
-                    #    cols: 1
-                        size_hint: (1, 1)
-                        orientation: 'vertical'
-                        BoxLayout:
-                            size: (24, 24)
-                            size_hint: (0.5, None)
-                            orientation: 'horizontal'
-                            Button:
-                                size: (24, 24)
-                                text: "+"
-                                on_release: if hasattr(folders_tree.selected_node, "folder_id") : app.kv_button_add_folder(folders_tree.selected_node)
-                            Button:
-                                size: (24, 24)
-                                text: "R"
-                                on_release: if hasattr(folders_tree.selected_node, "folder_id") : app.kv_button_rename_folder(folders_tree.selected_node)
-                        ScrollView:
-                            do_scroll_x: False
-                            size_hint: 1, 1
-                            bar_color: [.5, .10, .15, .8]
-                            bar_inactive_color: [.5, .20, .10, .5]
-                            scroll_type: ['bars']  # [‘bars’, ‘content’]
-
-                            TreeView:
-                                id: folders_tree
-                                size_hint: (1, None)
-                                hide_root: True
-                                indent_start: 4
-                                indent_level: 7
-                                color_selected: [.5, .10, .15, .8]
-                                on_touch_up: if hasattr(self.selected_node, "folder_id") : app.kv_tree_selected(self.selected_node.folder_id)
-
-                TabbedPanelItem:
-                    id: bookmarks
-                #    text: 'BM'
-                    background_normal: app.atlas_path + '/star1'
-                    background_down: app.atlas_path + '/star2'
-                #    background_normal: 'atlas://images/default/default/star1'
-                #    background_down: 'atlas://images/default/default/star2'
-
-                TabbedPanelItem:
-                    id: tags
-                    text: 'TG'
-
-                TabbedPanelItem:
-                    id: trash
-                    text: 'TH'
-
-        BoxLayout:
-            size_hint: (.3, 1)
-            orientation: 'vertical'
-            padding: 2
-            spacing: 5
-
-            GridLayout:
-                rows: 1
-                row_default_height: 32
-                size_hint_y: None
-                height: 32
-
-                Button:
-                    id: sort
-                    text: '^'
-                    size_hint: (None, None)
-                    height: 32
-                    width: 32
-
-                TextInput:
-                    id: search
-                    size_hint_y: None
-                    multiline: False
-                    height: 32
-                    focus: True
-                    on_text: app.kv_search_entered()
-
-            ScrollView:
-                do_scroll_x: False
-                size_hint: 1, 1
+            BoxLayout:
+                width: 150
+                size_hint: (.1, 1)
+                orientation: 'vertical'
+                padding: 2
+                spacing: 5
 
                 GridLayout:
-                    id: note_bar
-                    size_hint: (1, None)
-                    cols: 1
-                    row_default_height: 64
+                    rows: 1
+                    row_default_height: 32
+                    size_hint_y: None
+                    height: 32
+
+                    Button:
+                        id: new_storage
+                        text: 'New storage'
+                        size_hint_y: None
+                        height: '32dp'
+                        on_release: app.kv_button_test()
+
+                    Button:
+                        id: settings
+                        text: 'Settings'
+                        size_hint_y: None
+                        height: '32dp'
+                        on_release:
+
+                TabbedPanel:
+                    id: tp
+                    size_hint_y: 1
+                    do_default_tab: False
+                    tab_height: 32
+                    tab_width: 32
+                    strip_border: [1,1,1,1]
+                 #   strip_image: True
+
+                    TabbedPanelItem:
+                        id: folders
+                        text: 'FL'
+                        BoxLayout:
+                        #    cols: 1
+                            size_hint: (1, 1)
+                            orientation: 'vertical'
+                            BoxLayout:
+                                size: (24, 24)
+                                size_hint: (0.5, None)
+                                orientation: 'horizontal'
+                                Button:
+                                    size: (24, 24)
+                                    text: "+"
+                                    on_release: if hasattr(folders_tree.selected_node, "folder_id") : app.kv_button_add_folder(folders_tree.selected_node)
+                                Button:
+                                    size: (24, 24)
+                                    text: "R"
+                                    on_release: if hasattr(folders_tree.selected_node, "folder_id") : app.kv_button_rename_folder(folders_tree.selected_node)
+
+                            ScrollView:
+                                do_scroll_x: False
+                                size_hint: 1, 1
+                                bar_color: [.5, .10, .15, .8]
+                                bar_inactive_color: [.5, .20, .10, .5]
+                                scroll_type: ['bars']  # [‘bars’, ‘content’]
+
+                                TreeView:
+                                    id: folders_tree
+                                    size_hint: (1, None)
+                                    hide_root: True
+                                    indent_start: 20
+                                    indent_level: 10
+                                    color_selected: [.5, .10, .15, .8]
+                                    on_touch_up: if hasattr(self.selected_node, "folder_id") : app.kv_tree_selected(self.selected_node.folder_id)
+
+                    TabbedPanelItem:
+                        id: bookmarks
+                    #    text: 'BM'
+                        background_normal: app.atlas_path + '/star1'
+                        background_down: app.atlas_path + '/star2'
+                    #    background_normal: 'atlas://images/default/default/star1'
+                    #    background_down: 'atlas://images/default/default/star2'
+
+                    TabbedPanelItem:
+                        id: tags
+                        text: 'TG'
+
+                    TabbedPanelItem:
+                        id: trash
+                        text: 'TH'
+
+        Splitter:
+            sizable_from: 'right'
+            border: (1,1,1,1)
+            strip_size: 2
+            min_size: 200
+            man_size: 350
+
+            BoxLayout:
+                size_hint: (.2, 1)
+                orientation: 'vertical'
+                padding: 2
+                spacing: 5
+
+                GridLayout:
+                    rows: 1
+                    row_default_height: 32
+                    size_hint_y: None
+                    height: 32
+
+                    Button:
+                        id: sort
+                        text: '^'
+                        size_hint: (None, None)
+                        height: 32
+                        width: 32
+
+                    TextInput:
+                        id: search
+                        size_hint_y: None
+                        multiline: False
+                        height: 32
+                        focus: True
+                        on_text: app.kv_search_entered()
+
+                ScrollView:
+                    do_scroll_x: False
+                    size_hint: 1, 1
+
+                    GridLayout:
+                        id: note_bar
+                        size_hint: (1, None)
+                        cols: 1
+                        row_default_height: 64
 
         BoxLayout:
             size_hint: (.7, 1)
