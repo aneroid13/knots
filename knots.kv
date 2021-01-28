@@ -104,6 +104,7 @@ BoxLayout:
             strip_size: 2
             min_size: 200
             man_size: 350
+            on_release: app.kv_button_splitter_release()
 
             BoxLayout:
                 size_hint: (.2, 1)
@@ -140,7 +141,6 @@ BoxLayout:
                         id: note_bar
                         size_hint: (1, None)
                         cols: 1
-                        row_default_height: 64
 
         BoxLayout:
             size_hint: (.7, 1)

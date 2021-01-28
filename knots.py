@@ -20,6 +20,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
+from kivy.animation import Animation
 
 import knot_modules
 
@@ -183,6 +184,7 @@ class KnotsApp(App):
     def __init__(self):
         super().__init__()
 #        default_storage = Storage("MyStorage", "text")
+        self.button_style = {"vsize": 56, "valign": "middle", "short": False, "textrows": 2 }
         self.storages = []
         self.storages.append(Storage("MyStorage", "filesystem"))
         self.storages.append(Storage("MyShelf", "shelf"))
@@ -193,6 +195,7 @@ class KnotsApp(App):
     def build(self):
         self.root.ids.folders_tree.bind(minimum_height=self.root.ids.folders_tree.setter('height'))
         self.root.ids.note_bar.bind(minimum_height=self.root.ids.note_bar.setter('height'))
+        self.root.ids.note_bar.row_default_height = self.button_style["vsize"]
 
         for each in self.storages:
             self.populate_tree_view(self.root.ids.folders_tree, None, each.root_folder)
@@ -273,14 +276,20 @@ class KnotsApp(App):
         note_butt.text = note_title
         note_butt.group = "Notes"
         note_butt.halign = "left"
-        note_butt.valign = "top"
-        note_butt.shorten = True
+        note_butt.valign = self.button_style["valign"]
+        note_butt.max_lines = self.button_style["textrows"]
+        note_butt.shorten = self.button_style["short"]
         note_butt.shorten_from = "right"
-        note_butt.text_size = (180, None)
+        note_butt.text_size = (self.root.ids.note_bar.width - 20, self.button_style["vsize"] - 4)  # (180, None)
         if current:
             note_butt.state = 'down'
         note_butt.bind(state=self.button_selection)
         self.root.ids.note_bar.add_widget(note_butt)
+
+    def kv_button_splitter_release(self):
+       # pp(gm(self.root.ids.note_bar.children))
+        for butt in self.root.ids.note_bar.children:
+            butt.text_size = (self.root.ids.note_bar.width - 20, self.button_style["vsize"] - 4)
 
     def kv_title_focused(self, focused):
         if focused:
