@@ -18,6 +18,7 @@ from kivy.uix.togglebutton import ToggleButton as button, Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.accordion import AccordionItem
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
 from kivy.animation import Animation
@@ -100,6 +101,14 @@ class NoteBank:
             if note['folder_id'] == folder_id:
                 folder_notes.append(note)
         return folder_notes
+
+    def get_notes_by_bookmark(self):
+        return [note for note in self.info_bank.values() if note['bookmark']]
+        # bm_notes = []
+        # for note in self.info_bank.values():
+        #     if note['bookmark']:
+        #         bm_notes.append(note)
+        # return bm_notes
 
     def save_notes(self):
         self.storemetod.save_text(self.text_bank)
@@ -199,6 +208,7 @@ class KnotsApp(App):
 
         for each in self.storages:
             self.populate_tree_view(self.root.ids.folders_tree, None, each.root_folder)
+            self.fill_bm_bar(each)
 
     def add_entered_folder(self, parent, folder_name):
         for stor in self.storages:
@@ -286,8 +296,30 @@ class KnotsApp(App):
         note_butt.bind(state=self.button_selection)
         self.root.ids.note_bar.add_widget(note_butt)
 
+    def fill_bm_bar(self, store):
+        butt = AccordionItem()
+        butt.id = str(store.id)
+        butt.height = 32
+        butt.title = str(store.name)
+        butt.bind(on_touch_down=self.bm_selected)
+        self.root.ids.bm_bar.add_widget(butt)
+
+    def bm_selected(self, touch_obj, mouse):
+        if touch_obj and not touch_obj.collapse:
+            storage_id = touch_obj.title
+            print(storage_id)
+        self.clear_notes_and_notebar()
+        for note in self.bank.get_notes_by_bookmark():  # fill note_bar
+            self.add_note_on_bar(note['id'], note['title'], False)
+
+    def clear_notes_and_notebar(self):
+        if self.current.button:
+            self.bank.add_note(self.current.note, self.current.text)
+        self.current.new()
+        self.init_notes_widgets()
+        self.root.ids.note_bar.clear_widgets()  # clear note_bar
+
     def kv_button_splitter_release(self):
-       # pp(gm(self.root.ids.note_bar.children))
         for butt in self.root.ids.note_bar.children:
             butt.text_size = (self.root.ids.note_bar.width - 20, self.button_style["vsize"] - 4)
 
@@ -331,13 +363,9 @@ class KnotsApp(App):
                 butt.opacity = 1
                 butt.disable = False
 
-    def kv_tree_selected(self, treenode_id):
-        if self.current.button:
-            self.bank.add_note(self.current.note, self.current.text)
-        self.current.new()
-        self.init_notes_widgets()
+    def kv_fl_tree_selected(self, treenode_id):
+        self.clear_notes_and_notebar()
         self.current_folder_id = str(treenode_id)
-        self.root.ids.note_bar.clear_widgets()  # clear note_bar
         for note in self.bank.get_notes_by_folder(self.current_folder_id):  # fill note_bar
             self.add_note_on_bar(note['id'], note['title'], False)
 
@@ -346,6 +374,7 @@ class KnotsApp(App):
 
     def kv_button_rename_folder(self, treenode):
         self.root.ids.folders_tree.add_node(TreeView_NewFolderInput(treenode.text, treenode=treenode, rename=True))
+
 
     def kv_button_test(self):
         pass

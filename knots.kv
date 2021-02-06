@@ -80,23 +80,39 @@ BoxLayout:
                                     indent_start: 20
                                     indent_level: 10
                                     color_selected: [.5, .10, .15, .8]
-                                    on_touch_up: if hasattr(self.selected_node, "folder_id") : app.kv_tree_selected(self.selected_node.folder_id)
-
-                    TabbedPanelItem:
-                        id: bookmarks
-                    #    text: 'BM'
-                        background_normal: app.atlas_path + '/star1'
-                        background_down: app.atlas_path + '/star2'
-                    #    background_normal: 'atlas://images/default/default/star1'
-                    #    background_down: 'atlas://images/default/default/star2'
+                                    on_touch_up: if hasattr(self.selected_node, "folder_id") : app.kv_fl_tree_selected(self.selected_node.folder_id)
 
                     TabbedPanelItem:
                         id: tags
                         text: 'TG'
 
                     TabbedPanelItem:
+                        id: bookmarks
+                        #text: 'BM'
+                        background_normal: app.atlas_path + '/star1'
+                        background_down: app.atlas_path + '/star2'
+
+                        ScrollView:
+                            do_scroll_x: False
+                            size_hint: 1, 1
+                            bar_color: [.5, .10, .15, .8]
+                            bar_inactive_color: [.5, .20, .10, .5]
+                            scroll_type: ['bars']  # [‘bars’, ‘content’]
+
+
+                        Accordion:
+                            id: bm_bar
+                            orientation: 'vertical'
+                            size_hint: (1, None)
+
+                    TabbedPanelItem:
                         id: trash
                         text: 'TH'
+
+                        Accordion:
+                            id: th_bar
+                            orientation: 'vertical'
+                            size_hint: (1, None)
 
         Splitter:
             sizable_from: 'right'
