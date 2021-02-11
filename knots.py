@@ -18,16 +18,18 @@ from kivy.uix.togglebutton import ToggleButton as button, Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.accordion import AccordionItem
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
 from kivy.animation import Animation
 
+
 import knot_modules
+#import shaders
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Config.set('kivy', 'log_level', 'warning')  # string, one of ‘trace’, ‘debug’, ‘info’, ‘warning’, ‘error’ or ‘critical’
-
 
 class NoteInfo:
     def __init__(self):
