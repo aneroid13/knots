@@ -86,6 +86,10 @@ BoxLayout:
                         id: tags_tab
                         text: 'TG'
 
+                        StorageSelector:
+                            id: storage_tags
+                            tab_type: 'tags'
+
                     TabbedPanelItem:
                         id: search_tab
                         text: 'CT'
@@ -100,17 +104,17 @@ BoxLayout:
                         background_normal: app.atlas_path + '/star1'
                         background_down: app.atlas_path + '/star2'
 
-                        ScrollView:
-                            do_scroll_x: False
-                            size_hint: 1, 1
-                            bar_color: [.5, .10, .15, .8]
-                            bar_inactive_color: [.5, .20, .10, .5]
-                            scroll_type: ['bars']  # [‘bars’, ‘content’]
+                        StorageSelector:
+                            id: storage_bookmarks
+                            tab_type: 'bookmarks'
 
                     TabbedPanelItem:
                         id: trash_tab
                         text: 'TH'
 
+                        StorageSelector:
+                            id: storage_trash
+                            tab_type: 'trash'
 
         Splitter:
             sizable_from: 'right'
@@ -238,6 +242,8 @@ BoxLayout:
                     height: 32
                     disabled: True
                     on_release: app.kv_trashed()
+
+<StorageSelector>:
 
 <ColoredBL@BoxLayout>
     canvas.before:

@@ -13,7 +13,7 @@ from kivy.app import App
 from kivy.config import Config
 from kivy.properties import StringProperty
 from kivy.atlas import Atlas
-from kivy.uix.treeview import TreeViewLabel, TreeViewNode
+from kivy.uix.treeview import TreeView, TreeViewLabel, TreeViewNode
 from kivy.core.window import Window
 from kivy.uix.widget import Widget
 from kivy.uix.togglebutton import ToggleButton as button, Button
@@ -30,7 +30,7 @@ import knot_modules
 
 # import shaders
 
-Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
+Config.set('input', 'mouse', 'mouse, multitouch_on_demand')
 Config.set('kivy', 'log_level', 'warning')  # string, one of ‘trace’, ‘debug’, ‘info’, ‘warning’, ‘error’ or ‘critical’
 
 
@@ -148,10 +148,11 @@ class Storage:
 class StorageSelector(Accordion):
     orientation = 'vertical'
     selected_title = StringProperty("")
+    tab_type = StringProperty("")
 
-    def __init__(self, type, **kwargs):
+    def __init__(self, **kwargs):
         super(StorageSelector, self).__init__(**kwargs)
-        self.type = type
+   #    self.type = tab_type
 
     def select(self, instance):
         self.selected_title = str(instance.title)
@@ -171,14 +172,14 @@ class ThemeFolders(anytree.NodeMixin):  # Add Node feature
             self.children = children
 
 
-class TreeView_LabelButt(BoxLayout, TreeViewNode):
-    def __init__(self, msg, **kwargs):
-        super(TreeView_LabelButt, self).__init__(**kwargs)
-        self.label = Label()
-        self.label.text = msg
-        self.butt = Button()
-        self.add_widget(self.label)
-        self.add_widget(self.butt)
+# class TreeView_LabelButt(BoxLayout, TreeViewNode):
+#     def __init__(self, msg, **kwargs):
+#         super(TreeView_LabelButt, self).__init__(**kwargs)
+#         self.label = Label()
+#         self.label.text = msg
+#         self.butt = Button()
+#         self.add_widget(self.label)
+#         self.add_widget(self.butt)
 
 
 class TreeView_Folder(TreeViewLabel):
@@ -237,47 +238,42 @@ class KnotsApp(App):
         self.root.ids.note_bar.bind(minimum_height=self.root.ids.note_bar.setter('height'))
         self.root.ids.note_bar.row_default_height = self.button_style["vsize"]
 
-        bm = StorageSelector(type="bookmark")
-        bm.bind(selected_title=self.tab_selected)
-
-        tr = StorageSelector(type="trash")
-        tr.bind(selected_title=self.tab_selected)
-
-        tags = StorageSelector(type="tags")
-        tags.bind(selected_title=self.tab_selected)
+        self.root.ids.storage_bookmarks.bind(selected_title=self.tab_selected)
+        self.root.ids.storage_tags.bind(selected_title=self.tab_selected)
+        self.root.ids.storage_trash.bind(selected_title=self.tab_selected)
 
         for each in self.storages:
             self.populate_tree_view(self.root.ids.folders_tree, None, each.root_folder)
-            bm.add_widget(self.get_accitem(each))
-            tr.add_widget(self.get_accitem(each))
-            tags.add_widget(self.get_accitem(each))
+            self.root.ids.storage_bookmarks.add_widget(self.get_accitem(each))
+            self.root.ids.storage_tags.add_widget(self.get_accitem(each, obj=TreeView()))
+            self.root.ids.storage_trash.add_widget(self.get_accitem(each))
 
-        self.root.ids.bookmarks_tab.add_widget(bm)
-        self.root.ids.trash_tab.add_widget(tr)
-        self.root.ids.tags_tab.add_widget(tags)
-
-    def get_accitem(self, store):
+    def get_accitem(self, store, obj=None):
         butt = AccordionItem()
         butt.id = str(store.id)
         butt.height = 22
         butt.title = str(store.name)
+        if obj:
+            obj.id = 'tree_' + store.name
+            butt.add_widget(obj)
         return butt
 
     def tab_selected(self, instance, value):
         self.current_storage_name = value
         self.clear_notes_and_notebar()
 
-        if instance.type == "bookmark":
+        if instance.tab_type == "bookmarks":
             for note in self.bank.get_notes_by_bookmark():
                 self.add_note_on_bar(note['id'], note['title'], False)
 
-        if instance.type == "trash":
+        if instance.tab_type == "trash":
             for note in self.bank.get_notes_by_trashcan():
                 self.add_note_on_bar(note['id'], note['title'], False)
 
-        if instance.type == "tags":
-            for tag in self.bank.get_all_tags():
-                print(tag)
+        if instance.tab_type == "tags":
+            id_name = 'tree_' + value
+            for tag in self.bank.get_all_tags(): pass
+              #  self.populate_tree_view(self.root.ids.id_name, None, tag)
              # TODO: Add tree view and fill with tags
 
     def add_entered_folder(self, parent, folder_name):
@@ -326,7 +322,7 @@ class KnotsApp(App):
 
     def button_selection(self, instance, pos):
         if pos == 'normal' and \
-                str(instance.id) == str(self.current.get_id()):  # TODO: fix broken: crash on click
+                str(instance.id) == str(self.current.get_id()):
             self.bank.add_note(self.current.note, self.current.text)
             self.current.new()
 
