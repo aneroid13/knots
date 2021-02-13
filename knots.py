@@ -11,41 +11,44 @@ from pprint import pprint as pp
 from functools import partial
 from kivy.app import App
 from kivy.config import Config
+from kivy.properties import StringProperty
 from kivy.atlas import Atlas
 from kivy.uix.treeview import TreeViewLabel, TreeViewNode
 from kivy.core.window import Window
+from kivy.uix.widget import Widget
 from kivy.uix.togglebutton import ToggleButton as button, Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.accordion import AccordionItem
+from kivy.uix.accordion import Accordion, AccordionItem, AccordionException
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
 from kivy.animation import Animation
 
-
 import knot_modules
-#import shaders
+
+# import shaders
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Config.set('kivy', 'log_level', 'warning')  # string, one of ‘trace’, ‘debug’, ‘info’, ‘warning’, ‘error’ or ‘critical’
+
 
 class NoteInfo:
     def __init__(self):
         self.button = None
         self.text = ""
         self.note = {
-                'id': str(uuid.uuid4()),
-                'create_time': time.time(),
-                'update_time': time.time(),
-                'title': "",
-                'codetype': "",
-                'tags': [],
-                'folder_id': None,
-                'bookmark': False,
-                'trash': False,
-                }
+            'id': str(uuid.uuid4()),
+            'create_time': time.time(),
+            'update_time': time.time(),
+            'title': "",
+            'codetype': "",
+            'tags': [],
+            'folder_id': None,
+            'bookmark': False,
+            'trash': False,
+        }
 
     def new(self):
         self.__init__()
@@ -98,19 +101,19 @@ class NoteBank:
         return self.text_bank[id]
 
     def get_notes_by_folder(self, folder_id: str):
-        folder_notes = []
-        for note in self.info_bank.values():
-            if note['folder_id'] == folder_id:
-                folder_notes.append(note)
-        return folder_notes
+        return [note for note in self.info_bank.values() if note['folder_id'] == folder_id]
+
+    def get_notes_by_tag(self, tag):
+        return [note for note in self.info_bank.values() if tag in note['tag']]
+
+    def get_notes_by_codetype(self, codetype):
+        return [note for note in self.info_bank.values() if note['codetype'] == codetype]
 
     def get_notes_by_bookmark(self):
         return [note for note in self.info_bank.values() if note['bookmark']]
-        # bm_notes = []
-        # for note in self.info_bank.values():
-        #     if note['bookmark']:
-        #         bm_notes.append(note)
-        # return bm_notes
+
+    def get_notes_by_trashcan(self):
+        return [note for note in self.info_bank.values() if note['trash']]
 
     def save_notes(self):
         self.storemetod.save_text(self.text_bank)
@@ -134,6 +137,22 @@ class Storage:
             self.root_folder = TreeImporter().import_(tree_data)
         else:
             self.root_folder = ThemeFolders(self.name)
+
+
+class StorageSelector(Accordion):
+    orientation = 'vertical'
+    selected_title = StringProperty("")
+
+    def __init__(self, **kwargs):
+        super(StorageSelector, self).__init__(**kwargs)
+
+    def select(self, instance):
+        self.selected_title = str(instance.title)
+        if instance not in self.children:
+            raise AccordionException('Accordion: instance not found in children')
+        for widget in self.children:
+            widget.collapse = widget is not instance
+        self._trigger_layout()
 
 
 class ThemeFolders(anytree.NodeMixin):  # Add Node feature
@@ -194,23 +213,44 @@ class KnotsApp(App):
 
     def __init__(self):
         super().__init__()
-#        default_storage = Storage("MyStorage", "text")
-        self.button_style = {"vsize": 56, "valign": "middle", "short": False, "textrows": 2 }
+        #        default_storage = Storage("MyStorage", "text")
+        self.button_style = {"vsize": 56, "valign": "middle", "short": False, "textrows": 2}
         self.storages = []
         self.storages.append(Storage("MyStorage", "filesystem"))
         self.storages.append(Storage("MyShelf", "shelf"))
         self.bank = self.storages[0].bank
         self.current = NoteInfo()
         self.current_folder_id = '0'
+    #    Clock.schedule_interval(self.bank.save_notes(), 60 * 10)   # Save notes automatically every 10 min
+
 
     def build(self):
         self.root.ids.folders_tree.bind(minimum_height=self.root.ids.folders_tree.setter('height'))
         self.root.ids.note_bar.bind(minimum_height=self.root.ids.note_bar.setter('height'))
         self.root.ids.note_bar.row_default_height = self.button_style["vsize"]
 
+        bm = StorageSelector()
+        bm.id = "bm_bar"
+        bm.bind(selected_title=self.bm_selected)
+
         for each in self.storages:
             self.populate_tree_view(self.root.ids.folders_tree, None, each.root_folder)
-            self.fill_bm_bar(each)
+            bm.add_widget(self.get_accitem(each))
+
+        self.root.ids.bookmarks.add_widget(bm)
+
+    def get_accitem(self, store):
+        butt = AccordionItem()
+        butt.id = str(store.id)
+        butt.height = 32
+        butt.title = str(store.name)
+        return butt
+
+    def bm_selected(self, instance, value):
+        print(value)
+        self.clear_notes_and_notebar()
+        for note in self.bank.get_notes_by_bookmark():  # fill note_bar
+            self.add_note_on_bar(note['id'], note['title'], False)
 
     def add_entered_folder(self, parent, folder_name):
         for stor in self.storages:
@@ -258,7 +298,7 @@ class KnotsApp(App):
 
     def button_selection(self, instance, pos):
         if pos == 'normal' and \
-           str(instance.id) == str(self.current.get_id()):  # TODO: fix broken: crash on click
+                str(instance.id) == str(self.current.get_id()):  # TODO: fix broken: crash on click
             self.bank.add_note(self.current.note, self.current.text)
             self.current.new()
 
@@ -297,22 +337,6 @@ class KnotsApp(App):
             note_butt.state = 'down'
         note_butt.bind(state=self.button_selection)
         self.root.ids.note_bar.add_widget(note_butt)
-
-    def fill_bm_bar(self, store):
-        butt = AccordionItem()
-        butt.id = str(store.id)
-        butt.height = 32
-        butt.title = str(store.name)
-        butt.bind(on_touch_down=self.bm_selected)
-        self.root.ids.bm_bar.add_widget(butt)
-
-    def bm_selected(self, touch_obj, mouse):
-        if touch_obj and not touch_obj.collapse:
-            storage_id = touch_obj.title
-            print(storage_id)
-        self.clear_notes_and_notebar()
-        for note in self.bank.get_notes_by_bookmark():  # fill note_bar
-            self.add_note_on_bar(note['id'], note['title'], False)
 
     def clear_notes_and_notebar(self):
         if self.current.button:
@@ -377,7 +401,6 @@ class KnotsApp(App):
     def kv_button_rename_folder(self, treenode):
         self.root.ids.folders_tree.add_node(TreeView_NewFolderInput(treenode.text, treenode=treenode, rename=True))
 
-
     def kv_button_test(self):
         pass
 
@@ -390,6 +413,7 @@ class KnotsApp(App):
             if stor.name == "MyStorage":
                 exp = TreeExporter(indent=2, sort_keys=True)
                 self.bank.save_tree(exp.export(stor.root_folder))
+
 
 # TODO:  1. Auto save by idle time
 

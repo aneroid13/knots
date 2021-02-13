@@ -87,6 +87,14 @@ BoxLayout:
                         text: 'TG'
 
                     TabbedPanelItem:
+                        id: search
+                        text: 'CT'
+
+                    TabbedPanelItem:
+                        id: search
+                        text: 'SR'
+
+                    TabbedPanelItem:
                         id: bookmarks
                         #text: 'BM'
                         background_normal: app.atlas_path + '/star1'
@@ -98,12 +106,6 @@ BoxLayout:
                             bar_color: [.5, .10, .15, .8]
                             bar_inactive_color: [.5, .20, .10, .5]
                             scroll_type: ['bars']  # [‘bars’, ‘content’]
-
-
-                        Accordion:
-                            id: bm_bar
-                            orientation: 'vertical'
-                            size_hint: (1, None)
 
                     TabbedPanelItem:
                         id: trash
