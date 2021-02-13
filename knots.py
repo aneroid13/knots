@@ -100,11 +100,17 @@ class NoteBank:
             self.text_bank[id] = self.storemetod.load_text(id)
         return self.text_bank[id]
 
+    def get_all_tags(self):
+        all_tags = set()
+        for note_tags in [note['tags'] for note in self.info_bank.values() if note['tags']]:
+            [all_tags.add(tag) for tag in note_tags]
+        return all_tags
+
     def get_notes_by_folder(self, folder_id: str):
         return [note for note in self.info_bank.values() if note['folder_id'] == folder_id]
 
     def get_notes_by_tag(self, tag):
-        return [note for note in self.info_bank.values() if tag in note['tag']]
+        return [note for note in self.info_bank.values() if tag in note['tags']]
 
     def get_notes_by_codetype(self, codetype):
         return [note for note in self.info_bank.values() if note['codetype'] == codetype]
@@ -143,8 +149,9 @@ class StorageSelector(Accordion):
     orientation = 'vertical'
     selected_title = StringProperty("")
 
-    def __init__(self, **kwargs):
+    def __init__(self, type, **kwargs):
         super(StorageSelector, self).__init__(**kwargs)
+        self.type = type
 
     def select(self, instance):
         self.selected_title = str(instance.title)
@@ -218,6 +225,7 @@ class KnotsApp(App):
         self.storages = []
         self.storages.append(Storage("MyStorage", "filesystem"))
         self.storages.append(Storage("MyShelf", "shelf"))
+        self.current_storage_name = ""
         self.bank = self.storages[0].bank
         self.current = NoteInfo()
         self.current_folder_id = '0'
@@ -229,28 +237,48 @@ class KnotsApp(App):
         self.root.ids.note_bar.bind(minimum_height=self.root.ids.note_bar.setter('height'))
         self.root.ids.note_bar.row_default_height = self.button_style["vsize"]
 
-        bm = StorageSelector()
-        bm.id = "bm_bar"
-        bm.bind(selected_title=self.bm_selected)
+        bm = StorageSelector(type="bookmark")
+        bm.bind(selected_title=self.tab_selected)
+
+        tr = StorageSelector(type="trash")
+        tr.bind(selected_title=self.tab_selected)
+
+        tags = StorageSelector(type="tags")
+        tags.bind(selected_title=self.tab_selected)
 
         for each in self.storages:
             self.populate_tree_view(self.root.ids.folders_tree, None, each.root_folder)
             bm.add_widget(self.get_accitem(each))
+            tr.add_widget(self.get_accitem(each))
+            tags.add_widget(self.get_accitem(each))
 
-        self.root.ids.bookmarks.add_widget(bm)
+        self.root.ids.bookmarks_tab.add_widget(bm)
+        self.root.ids.trash_tab.add_widget(tr)
+        self.root.ids.tags_tab.add_widget(tags)
 
     def get_accitem(self, store):
         butt = AccordionItem()
         butt.id = str(store.id)
-        butt.height = 32
+        butt.height = 22
         butt.title = str(store.name)
         return butt
 
-    def bm_selected(self, instance, value):
-        print(value)
+    def tab_selected(self, instance, value):
+        self.current_storage_name = value
         self.clear_notes_and_notebar()
-        for note in self.bank.get_notes_by_bookmark():  # fill note_bar
-            self.add_note_on_bar(note['id'], note['title'], False)
+
+        if instance.type == "bookmark":
+            for note in self.bank.get_notes_by_bookmark():
+                self.add_note_on_bar(note['id'], note['title'], False)
+
+        if instance.type == "trash":
+            for note in self.bank.get_notes_by_trashcan():
+                self.add_note_on_bar(note['id'], note['title'], False)
+
+        if instance.type == "tags":
+            for tag in self.bank.get_all_tags():
+                print(tag)
+             # TODO: Add tree view and fill with tags
 
     def add_entered_folder(self, parent, folder_name):
         for stor in self.storages:

@@ -47,7 +47,7 @@ BoxLayout:
                  #   strip_image: True
 
                     TabbedPanelItem:
-                        id: folders
+                        id: folders_tab
                         text: 'FL'
                         BoxLayout:
                         #    cols: 1
@@ -83,19 +83,19 @@ BoxLayout:
                                     on_touch_up: if hasattr(self.selected_node, "folder_id") : app.kv_fl_tree_selected(self.selected_node.folder_id)
 
                     TabbedPanelItem:
-                        id: tags
+                        id: tags_tab
                         text: 'TG'
 
                     TabbedPanelItem:
-                        id: search
+                        id: search_tab
                         text: 'CT'
 
                     TabbedPanelItem:
-                        id: search
+                        id: search_tab
                         text: 'SR'
 
                     TabbedPanelItem:
-                        id: bookmarks
+                        id: bookmarks_tab
                         #text: 'BM'
                         background_normal: app.atlas_path + '/star1'
                         background_down: app.atlas_path + '/star2'
@@ -108,13 +108,9 @@ BoxLayout:
                             scroll_type: ['bars']  # [‘bars’, ‘content’]
 
                     TabbedPanelItem:
-                        id: trash
+                        id: trash_tab
                         text: 'TH'
 
-                        Accordion:
-                            id: th_bar
-                            orientation: 'vertical'
-                            size_hint: (1, None)
 
         Splitter:
             sizable_from: 'right'
