@@ -12,7 +12,7 @@ BoxLayout:
 
             BoxLayout:
                 width: 150
-                size_hint: (.1, 1)
+                size_hint: (.05, 1)
                 orientation: 'vertical'
                 padding: 2
                 spacing: 5
@@ -91,7 +91,7 @@ BoxLayout:
                             tab_type: 'tags'
 
                     TabbedPanelItem:
-                        id: search_tab
+                        id: codetype_tab
                         text: 'CT'
 
                     TabbedPanelItem:
@@ -176,6 +176,7 @@ BoxLayout:
                 on_text: app.kv_title_entered()
                 on_focus: app.kv_title_focused(self.focused)
 
+
             Carousel:
                 size_hint: (1, 1)
                 orientation: 'horizontal'
@@ -244,6 +245,8 @@ BoxLayout:
                     on_release: app.kv_trashed()
 
 <StorageSelector>:
+
+<MYTextInput>
 
 <ColoredBL@BoxLayout>
     canvas.before:

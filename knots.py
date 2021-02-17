@@ -21,13 +21,13 @@ from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.scrollview import ScrollView
 from kivy.uix.accordion import Accordion, AccordionItem, AccordionException
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
 from kivy.animation import Animation
 
 import knot_modules
-
 # import shaders
 
 Config.set('input', 'mouse', 'mouse, multitouch_on_demand')
@@ -238,6 +238,8 @@ class KnotsApp(App):
         self.root.ids.note_bar.bind(minimum_height=self.root.ids.note_bar.setter('height'))
         self.root.ids.note_bar.row_default_height = self.button_style["vsize"]
 
+        self.root.ids.title.keyboard_on_key_down = self.keyboard_on_key_down
+
         self.root.ids.storage_bookmarks.bind(selected_title=self.tab_selected)
         self.root.ids.storage_tags.bind(selected_title=self.tab_selected)
         self.root.ids.storage_trash.bind(selected_title=self.tab_selected)
@@ -255,8 +257,26 @@ class KnotsApp(App):
         butt.title = str(store.name)
         if obj:
             obj.id = 'tree_' + store.name
-            butt.add_widget(obj)
+            obj.size_hint = (1, None)
+            obj.hide_root = True
+
+            scroll = ScrollView()
+            scroll.do_scroll_x = False
+            scroll.size_hint = (1, 1)
+            scroll.bar_color = [.5, .10, .15, .8]
+            scroll.bar_inactive_color = [.5, .20, .10, .5]
+            scroll.scroll_type = ['bars']  # [‘bars’, ‘content’]
+
+            scroll.add_widget(obj)
+            butt.add_widget(scroll)
         return butt
+
+    def keyboard_on_key_down(self, keyboard, keycode, text, modifiers):
+        #if keycode[1] == 'escape': keyboard.release()
+
+        if keycode[1] == 'tab' or keycode[1] == 'enter':
+            self.root.ids.code.focus = True
+        return True
 
     def tab_selected(self, instance, value):
         self.current_storage_name = value
@@ -271,10 +291,13 @@ class KnotsApp(App):
                 self.add_note_on_bar(note['id'], note['title'], False)
 
         if instance.tab_type == "tags":
-            id_name = 'tree_' + value
-            for tag in self.bank.get_all_tags(): pass
-              #  self.populate_tree_view(self.root.ids.id_name, None, tag)
-             # TODO: Add tree view and fill with tags
+            for ch in instance.children:
+                if ch.title == value:
+                    for tv_search in ch.walk(restrict=True):
+                        if isinstance(tv_search, TreeView):
+                            tv_current = tv_search
+            for tag in self.bank.get_all_tags():
+                tv_current.add_node(TreeViewLabel(text=tag))
 
     def add_entered_folder(self, parent, folder_name):
         for stor in self.storages:
