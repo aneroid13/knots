@@ -46,9 +46,10 @@ BoxLayout:
                     strip_border: [1,1,1,1]
                  #   strip_image: True
 
-                    TabbedPanelItem:
+                    TypedTabItem:
                         id: folders_tab
                         text: 'FL'
+                        type: 'folders'
                         BoxLayout:
                         #    cols: 1
                             size_hint: (1, 1)
@@ -80,41 +81,46 @@ BoxLayout:
                                     indent_start: 20
                                     indent_level: 10
                                     color_selected: [.5, .10, .15, .8]
-                                    on_touch_up: if hasattr(self.selected_node, "folder_id") : app.kv_fl_tree_selected(self.selected_node.folder_id)
+                                    on_touch_up: if hasattr(self.selected_node, "label_id") : app.kv_fl_tree_selected(self.selected_node.label_id)
 
-                    TabbedPanelItem:
+                    TypedTabItem:
                         id: tags_tab
                         text: 'TG'
+                        type: 'tags'
 
                         StorageSelector:
                             id: storage_tags
-                            tab_type: 'tags'
+                            type: 'tags'
 
-                    TabbedPanelItem:
-                        id: codetype_tab
+                    TypedTabItem:
+                        id: codetypes_tab
                         text: 'CT'
+                        type: 'codetypes'
 
-                    TabbedPanelItem:
+                    TypedTabItem:
                         id: search_tab
                         text: 'SR'
+                        type: 'search'
 
-                    TabbedPanelItem:
+                    TypedTabItem:
                         id: bookmarks_tab
                         #text: 'BM'
+                        type: 'bookmarks'
                         background_normal: app.atlas_path + '/star1'
                         background_down: app.atlas_path + '/star2'
 
                         StorageSelector:
                             id: storage_bookmarks
-                            tab_type: 'bookmarks'
+                            type: 'bookmarks'
 
-                    TabbedPanelItem:
+                    TypedTabItem:
                         id: trash_tab
                         text: 'TH'
+                        type: 'trash'
 
                         StorageSelector:
                             id: storage_trash
-                            tab_type: 'trash'
+                            type: 'trash'
 
         Splitter:
             sizable_from: 'right'
@@ -246,28 +252,10 @@ BoxLayout:
 
 <StorageSelector>:
 
-<MYTextInput>
+<TypedTabItem@TabbedPanelItem>:
+    type: ''
 
-<ColoredBL@BoxLayout>
-    canvas.before:
-    Color:
-        rgba: 0, 1, 0, 1
-    Rectangle:
-        pos: self.pos
-        size: self.size
-
-<TagBubbles@Bubble>
-    arrow_pos: "bottom_mid"
-    orientation: 'vertical'
-    size_hint: (None, None)
-    width: 180
-    height: 32
-    BubbleButton:
-        text: "test1"
-    BubbleButton:
-        text: "test2"
-
-<CTextInput@TextInput>
-    on_focus:
-        screen = self.parent
-        if screen.parent: screen.focused = self
+#<CTextInput@TextInput>
+#    on_focus:
+#        screen = self.parent
+#        if screen.parent: screen.focused = self

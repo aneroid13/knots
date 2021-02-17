@@ -148,11 +148,10 @@ class Storage:
 class StorageSelector(Accordion):
     orientation = 'vertical'
     selected_title = StringProperty("")
-    tab_type = StringProperty("")
+    type = StringProperty("")
 
     def __init__(self, **kwargs):
         super(StorageSelector, self).__init__(**kwargs)
-   #    self.type = tab_type
 
     def select(self, instance):
         self.selected_title = str(instance.title)
@@ -182,14 +181,14 @@ class ThemeFolders(anytree.NodeMixin):  # Add Node feature
 #         self.add_widget(self.butt)
 
 
-class TreeView_Folder(TreeViewLabel):
-    def __init__(self, folder_id, **kwargs):
-        self.folder_id = folder_id
-        super(TreeView_Folder, self).__init__(**kwargs)
+class TreeViewIDLabel(TreeViewLabel):
+    def __init__(self, label_id: str = None, **kwargs):
+        self.label_id = label_id
+        super(TreeViewIDLabel, self).__init__(**kwargs)
 
 
 class TreeView_NewFolderInput(BoxLayout, TreeViewNode):
-    def __init__(self, msg, treenode=None, rename=False, **kwargs):
+    def __init__(self, msg: str, treenode: TreeViewLabel = None, rename: bool = False, **kwargs):
         super(TreeView_NewFolderInput, self).__init__(**kwargs)
         self.associated_treenode = treenode
         self.height = 32
@@ -198,8 +197,8 @@ class TreeView_NewFolderInput(BoxLayout, TreeViewNode):
             self.txtinp.bind(on_text_validate=self.add_new_folder)
             self.txtinp.bind(on_focus=self.add_new_folder)
         else:
-            self.txtinp.bind(on_text_validate=partial(self.rename_folder, folder_id=treenode.folder_id))
-            self.txtinp.bind(on_focus=partial(self.rename_folder, folder_id=treenode.folder_id))
+            self.txtinp.bind(on_text_validate=partial(self.rename_folder, folder_id=treenode.label_id))
+            self.txtinp.bind(on_focus=partial(self.rename_folder, folder_id=treenode.label_id))
         self.add_widget(self.txtinp)
 
     def add_new_folder(self, txt_item):
@@ -247,19 +246,16 @@ class KnotsApp(App):
         for each in self.storages:
             self.populate_tree_view(self.root.ids.folders_tree, None, each.root_folder)
             self.root.ids.storage_bookmarks.add_widget(self.get_accitem(each))
-            self.root.ids.storage_tags.add_widget(self.get_accitem(each, obj=TreeView()))
+            self.root.ids.storage_tags.add_widget(self.get_accitem(each, tree=True, tab_type="tags"))
             self.root.ids.storage_trash.add_widget(self.get_accitem(each))
 
-    def get_accitem(self, store, obj=None):
+    def get_accitem(self, store, tree: bool = False, tab_type: str = None):
         butt = AccordionItem()
         butt.id = str(store.id)
         butt.height = 22
         butt.title = str(store.name)
-        if obj:
-            obj.id = 'tree_' + store.name
-            obj.size_hint = (1, None)
-            obj.hide_root = True
 
+        if tree:
             scroll = ScrollView()
             scroll.do_scroll_x = False
             scroll.size_hint = (1, 1)
@@ -267,7 +263,18 @@ class KnotsApp(App):
             scroll.bar_inactive_color = [.5, .20, .10, .5]
             scroll.scroll_type = ['bars']  # [‘bars’, ‘content’]
 
-            scroll.add_widget(obj)
+            tree_obj = TreeView()
+            tree_obj.id = 'tree_' + store.name
+            tree_obj.size_hint = (1, None)
+            tree_obj.hide_root = True
+
+            if tab_type == "tags":
+                for tag in self.bank.get_all_tags():
+                    tvl = TreeViewIDLabel(text=tag)
+                    tvl.bind(on_touch_up=self.tv_tree_selected)
+                    tree_obj.add_node(tvl)
+
+            scroll.add_widget(tree_obj)
             butt.add_widget(scroll)
         return butt
 
@@ -278,32 +285,42 @@ class KnotsApp(App):
             self.root.ids.code.focus = True
         return True
 
+    def tv_tree_selected(self, tvl, mouse):
+        tab_type = self.root.ids.tp.current_tab.type
+
+        if tab_type == "tags":
+            if tvl.is_selected:
+                tag = tvl.text
+                self.clear_notes_and_notebar()
+                for note in self.bank.get_notes_by_tag(tag):
+                    self.add_note_on_bar(note['id'], note['title'], False)
+
     def tab_selected(self, instance, value):
         self.current_storage_name = value
         self.clear_notes_and_notebar()
 
-        if instance.tab_type == "bookmarks":
+        if instance.type == "bookmarks":
             for note in self.bank.get_notes_by_bookmark():
                 self.add_note_on_bar(note['id'], note['title'], False)
 
-        if instance.tab_type == "trash":
+        if instance.type == "trash":
             for note in self.bank.get_notes_by_trashcan():
                 self.add_note_on_bar(note['id'], note['title'], False)
 
-        if instance.tab_type == "tags":
-            for ch in instance.children:
-                if ch.title == value:
-                    for tv_search in ch.walk(restrict=True):
-                        if isinstance(tv_search, TreeView):
-                            tv_current = tv_search
-            for tag in self.bank.get_all_tags():
-                tv_current.add_node(TreeViewLabel(text=tag))
+        if instance.type == "tags":
+            pass
+            # for ch in instance.children:
+            #     if ch.title == value:
+            #         for tv_search in ch.walk(restrict=True):
+            #             if isinstance(tv_search, TreeView):
+            #                 tv_current = tv_search
+
 
     def add_entered_folder(self, parent, folder_name):
         for stor in self.storages:
             if stor.name == "MyStorage":
                 storage = stor
-        parent_folder = anytree.find_by_attr(storage.root_folder, name="id", value=parent.folder_id)
+        parent_folder = anytree.find_by_attr(storage.root_folder, name="id", value=parent.label_id)
         current_folder = ThemeFolders(folder_name, parent=parent_folder)
 
         self.populate_tree_view(self.root.ids.folders_tree, parent, current_folder)
@@ -320,9 +337,9 @@ class KnotsApp(App):
 
     def populate_tree_view(self, tree_view, parent, node):
         if parent is None:
-            tree_node = tree_view.add_node(TreeView_Folder(folder_id=node.id, text=node.name, is_open=True))
+            tree_node = tree_view.add_node(TreeViewIDLabel(label_id=node.id, text=node.name, is_open=True))
         else:
-            tree_node = tree_view.add_node(TreeView_Folder(folder_id=node.id, text=node.name, is_open=True), parent)
+            tree_node = tree_view.add_node(TreeViewIDLabel(label_id=node.id, text=node.name, is_open=True), parent)
 
         for child_node in node.children:
             self.populate_tree_view(tree_view, tree_node, child_node)
