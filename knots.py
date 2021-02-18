@@ -106,6 +106,9 @@ class NoteBank:
             [all_tags.add(tag) for tag in note_tags]
         return all_tags
 
+    def get_all_codes(self):
+        return [note['codetype'] for note in self.info_bank.values() if note['codetype']]
+
     def get_notes_by_folder(self, folder_id: str):
         return [note for note in self.info_bank.values() if note['folder_id'] == folder_id]
 
@@ -147,7 +150,8 @@ class Storage:
 
 class StorageSelector(Accordion):
     orientation = 'vertical'
-    selected_title = StringProperty("")
+  #  selected_title = StringProperty("")
+    selected =
     type = StringProperty("")
 
     def __init__(self, **kwargs):
@@ -233,20 +237,23 @@ class KnotsApp(App):
 
 
     def build(self):
-        self.root.ids.folders_tree.bind(minimum_height=self.root.ids.folders_tree.setter('height'))
+        #self.root.ids.folders_tree.bind(minimum_height=self.root.ids.folders_tree.setter('height'))
         self.root.ids.note_bar.bind(minimum_height=self.root.ids.note_bar.setter('height'))
         self.root.ids.note_bar.row_default_height = self.button_style["vsize"]
 
         self.root.ids.title.keyboard_on_key_down = self.keyboard_on_key_down
 
-        self.root.ids.storage_bookmarks.bind(selected_title=self.tab_selected)
-        self.root.ids.storage_tags.bind(selected_title=self.tab_selected)
-        self.root.ids.storage_trash.bind(selected_title=self.tab_selected)
+        self.root.ids.storage_folders.bind(selected_title=self.storage_selected)
+        self.root.ids.storage_tags.bind(selected_title=self.storage_selected)
+        self.root.ids.storage_codetypes.bind(selected_title=self.storage_selected)
+        self.root.ids.storage_bookmarks.bind(selected_title=self.storage_selected)
+        self.root.ids.storage_trash.bind(selected_title=self.storage_selected)
 
         for each in self.storages:
-            self.populate_tree_view(self.root.ids.folders_tree, None, each.root_folder)
-            self.root.ids.storage_bookmarks.add_widget(self.get_accitem(each))
+            self.root.ids.storage_folders.add_widget(self.get_accitem(each, tree=True, tab_type="folders"))
             self.root.ids.storage_tags.add_widget(self.get_accitem(each, tree=True, tab_type="tags"))
+            self.root.ids.storage_codetypes.add_widget(self.get_accitem(each, tree=True, tab_type="codetypes"))
+            self.root.ids.storage_bookmarks.add_widget(self.get_accitem(each))
             self.root.ids.storage_trash.add_widget(self.get_accitem(each))
 
     def get_accitem(self, store, tree: bool = False, tab_type: str = None):
@@ -268,10 +275,19 @@ class KnotsApp(App):
             tree_obj.size_hint = (1, None)
             tree_obj.hide_root = True
 
+            if tab_type == "folders":
+                self.populate_tree_view(tree_obj, None, store.root_folder)
+
             if tab_type == "tags":
                 for tag in self.bank.get_all_tags():
                     tvl = TreeViewIDLabel(text=tag)
-                    tvl.bind(on_touch_up=self.tv_tree_selected)
+                    tvl.bind(is_selected=self.tv_tree_selected)
+                    tree_obj.add_node(tvl)
+
+            if tab_type == "codetypes":
+                for code in self.bank.get_all_codes():
+                    tvl = TreeViewIDLabel(text=code)
+                    tvl.bind(is_selected=self.tv_tree_selected)
                     tree_obj.add_node(tvl)
 
             scroll.add_widget(tree_obj)
@@ -288,14 +304,25 @@ class KnotsApp(App):
     def tv_tree_selected(self, tvl, mouse):
         tab_type = self.root.ids.tp.current_tab.type
 
-        if tab_type == "tags":
-            if tvl.is_selected:
-                tag = tvl.text
-                self.clear_notes_and_notebar()
-                for note in self.bank.get_notes_by_tag(tag):
-                    self.add_note_on_bar(note['id'], note['title'], False)
+        if tab_type == "folders":
+            self.current_folder_id = str(tvl.label_id)
+            self.clear_notes_and_notebar()
+            for note in self.bank.get_notes_by_folder(self.current_folder_id):  # fill note_bar
+                self.add_note_on_bar(note['id'], note['title'], False)
 
-    def tab_selected(self, instance, value):
+        if tab_type == "tags":
+            tag = tvl.text
+            self.clear_notes_and_notebar()
+            for note in self.bank.get_notes_by_tag(tag):
+                self.add_note_on_bar(note['id'], note['title'], False)
+
+        if tab_type == "codetypes":
+            code = tvl.text
+            self.clear_notes_and_notebar()
+            for note in self.bank.get_notes_by_codetype(code):
+                self.add_note_on_bar(note['id'], note['title'], False)
+
+    def storage_selected(self, instance, value):
         self.current_storage_name = value
         self.clear_notes_and_notebar()
 
@@ -307,8 +334,6 @@ class KnotsApp(App):
             for note in self.bank.get_notes_by_trashcan():
                 self.add_note_on_bar(note['id'], note['title'], False)
 
-        if instance.type == "tags":
-            pass
             # for ch in instance.children:
             #     if ch.title == value:
             #         for tv_search in ch.walk(restrict=True):
@@ -336,10 +361,9 @@ class KnotsApp(App):
         self.root.ids.folders_tree.remove_node(treenode)
 
     def populate_tree_view(self, tree_view, parent, node):
-        if parent is None:
-            tree_node = tree_view.add_node(TreeViewIDLabel(label_id=node.id, text=node.name, is_open=True))
-        else:
-            tree_node = tree_view.add_node(TreeViewIDLabel(label_id=node.id, text=node.name, is_open=True), parent)
+        tvl = TreeViewIDLabel(label_id=node.id, text=node.name, is_open=True)
+        tvl.bind(is_selected=self.tv_tree_selected)
+        tree_node = tree_view.add_node(tvl, parent)
 
         for child_node in node.children:
             self.populate_tree_view(tree_view, tree_node, child_node)
