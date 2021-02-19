@@ -3,7 +3,7 @@
 # gcc -Os -fPIC ./cyton/knots.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o knots  #Linux
 # gcc -Os -fPIC -D MS_WIN64 ./cyton/knots.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o knots  #Win
 
-import time, uuid, anytree
+import time, uuid, anytree, itertools
 from anytree.importer import JsonImporter as TreeImporter
 from anytree.exporter import JsonExporter as TreeExporter
 from inspect import getmembers as gm
@@ -11,7 +11,7 @@ from pprint import pprint as pp
 from functools import partial
 from kivy.app import App
 from kivy.config import Config
-from kivy.properties import StringProperty
+from kivy.properties import StringProperty, DictProperty
 from kivy.atlas import Atlas
 from kivy.uix.treeview import TreeView, TreeViewLabel, TreeViewNode
 from kivy.core.window import Window
@@ -26,6 +26,7 @@ from kivy.uix.accordion import Accordion, AccordionItem, AccordionException
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
 from kivy.animation import Animation
+from kivy.weakproxy import WeakProxy
 
 import knot_modules
 # import shaders
@@ -151,14 +152,14 @@ class Storage:
 class StorageSelector(Accordion):
     orientation = 'vertical'
   #  selected_title = StringProperty("")
-    selected =
+    selected = DictProperty()
     type = StringProperty("")
 
     def __init__(self, **kwargs):
         super(StorageSelector, self).__init__(**kwargs)
 
     def select(self, instance):
-        self.selected_title = str(instance.title)
+        self.selected = {"id": instance.id, "title": instance.title}
         if instance not in self.children:
             raise AccordionException('Accordion: instance not found in children')
         for widget in self.children:
@@ -224,17 +225,15 @@ class KnotsApp(App):
 
     def __init__(self):
         super().__init__()
-        #        default_storage = Storage("MyStorage", "text")
         self.button_style = {"vsize": 56, "valign": "middle", "short": False, "textrows": 2}
         self.storages = []
         self.storages.append(Storage("MyStorage", "filesystem"))
         self.storages.append(Storage("MyShelf", "shelf"))
-        self.current_storage_name = ""
-        self.bank = self.storages[0].bank
         self.current = NoteInfo()
+        self.current_storage_id = self.storages[0].id
         self.current_folder_id = '0'
+        self.bank = self.storages[0].bank
     #    Clock.schedule_interval(self.bank.save_notes(), 60 * 10)   # Save notes automatically every 10 min
-
 
     def build(self):
         #self.root.ids.folders_tree.bind(minimum_height=self.root.ids.folders_tree.setter('height'))
@@ -243,11 +242,11 @@ class KnotsApp(App):
 
         self.root.ids.title.keyboard_on_key_down = self.keyboard_on_key_down
 
-        self.root.ids.storage_folders.bind(selected_title=self.storage_selected)
-        self.root.ids.storage_tags.bind(selected_title=self.storage_selected)
-        self.root.ids.storage_codetypes.bind(selected_title=self.storage_selected)
-        self.root.ids.storage_bookmarks.bind(selected_title=self.storage_selected)
-        self.root.ids.storage_trash.bind(selected_title=self.storage_selected)
+        self.root.ids.storage_folders.bind(selected=self.storage_selected)
+        self.root.ids.storage_tags.bind(selected=self.storage_selected)
+        self.root.ids.storage_codetypes.bind(selected=self.storage_selected)
+        self.root.ids.storage_bookmarks.bind(selected=self.storage_selected)
+        self.root.ids.storage_trash.bind(selected=self.storage_selected)
 
         for each in self.storages:
             self.root.ids.storage_folders.add_widget(self.get_accitem(each, tree=True, tab_type="folders"))
@@ -255,6 +254,9 @@ class KnotsApp(App):
             self.root.ids.storage_codetypes.add_widget(self.get_accitem(each, tree=True, tab_type="codetypes"))
             self.root.ids.storage_bookmarks.add_widget(self.get_accitem(each))
             self.root.ids.storage_trash.add_widget(self.get_accitem(each))
+
+    def get_current_storage(self):
+        return [st for st in self.storages if st.id == self.current_storage_id][0]
 
     def get_accitem(self, store, tree: bool = False, tab_type: str = None):
         butt = AccordionItem()
@@ -279,13 +281,13 @@ class KnotsApp(App):
                 self.populate_tree_view(tree_obj, None, store.root_folder)
 
             if tab_type == "tags":
-                for tag in self.bank.get_all_tags():
+                for tag in store.bank.get_all_tags():
                     tvl = TreeViewIDLabel(text=tag)
                     tvl.bind(is_selected=self.tv_tree_selected)
                     tree_obj.add_node(tvl)
 
             if tab_type == "codetypes":
-                for code in self.bank.get_all_codes():
+                for code in store.bank.get_all_codes():
                     tvl = TreeViewIDLabel(text=code)
                     tvl.bind(is_selected=self.tv_tree_selected)
                     tree_obj.add_node(tvl)
@@ -323,38 +325,34 @@ class KnotsApp(App):
                 self.add_note_on_bar(note['id'], note['title'], False)
 
     def storage_selected(self, instance, value):
-        self.current_storage_name = value
-        self.clear_notes_and_notebar()
+        if self.root.ids.tp.current_tab.type == instance.type:
+            self.current_storage_id = value.id
+            self.bank = self.get_current_storage().bank      # Change bank notes
+            self.clear_notes_and_notebar()
 
-        if instance.type == "bookmarks":
-            for note in self.bank.get_notes_by_bookmark():
-                self.add_note_on_bar(note['id'], note['title'], False)
+            accordion_items_list = [child for stor in self.root.ids if "storage_" in stor for child in self.root.ids[stor].children]
+            accordion_items_list = filter(None, accordion_items_list)
+            for acc_it in [acc for acc in accordion_items_list if acc.id == self.current_storage_id]:
+                acc_it.collapse = False
 
-        if instance.type == "trash":
-            for note in self.bank.get_notes_by_trashcan():
-                self.add_note_on_bar(note['id'], note['title'], False)
+            if instance.type == "bookmarks":
+                for note in self.bank.get_notes_by_bookmark():
+                    self.add_note_on_bar(note['id'], note['title'], False)
 
-            # for ch in instance.children:
-            #     if ch.title == value:
-            #         for tv_search in ch.walk(restrict=True):
-            #             if isinstance(tv_search, TreeView):
-            #                 tv_current = tv_search
-
+            if instance.type == "trash":
+                for note in self.bank.get_notes_by_trashcan():
+                    self.add_note_on_bar(note['id'], note['title'], False)
 
     def add_entered_folder(self, parent, folder_name):
-        for stor in self.storages:
-            if stor.name == "MyStorage":
-                storage = stor
-        parent_folder = anytree.find_by_attr(storage.root_folder, name="id", value=parent.label_id)
+        root_folder = self.get_current_storage().root_folder
+        parent_folder = anytree.find_by_attr(root_folder, name="id", value=parent.label_id)
         current_folder = ThemeFolders(folder_name, parent=parent_folder)
 
         self.populate_tree_view(self.root.ids.folders_tree, parent, current_folder)
 
     def rename_entered_folder(self, folder_name, folder_id):
-        for stor in self.storages:
-            if stor.name == "MyStorage":
-                storage = stor
-        current_folder = anytree.find_by_attr(storage.root_folder, name="id", value=folder_id)
+        root_folder = self.get_current_storage().root_folder
+        current_folder = anytree.find_by_attr(root_folder, name="id", value=folder_id)
         current_folder.name = folder_name
 
     def remove_textinput(self, treenode):
@@ -497,10 +495,10 @@ class KnotsApp(App):
             self.bank.add_note(self.current.note, self.current.text)
 
         self.bank.save_notes()
-        for stor in self.storages:
-            if stor.name == "MyStorage":
-                exp = TreeExporter(indent=2, sort_keys=True)
-                self.bank.save_tree(exp.export(stor.root_folder))
+
+        stor = self.get_current_storage()
+        exp = TreeExporter(indent=2, sort_keys=True)
+        self.bank.save_tree(exp.export(stor.root_folder))
 
 
 # TODO:  1. Auto save by idle time

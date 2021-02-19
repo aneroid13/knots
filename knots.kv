@@ -11,6 +11,7 @@ BoxLayout:
             man_size: 200
 
             BoxLayout:
+                id: tabs_layout
                 width: 150
                 size_hint: (.05, 1)
                 orientation: 'vertical'
@@ -104,7 +105,7 @@ BoxLayout:
 
                         StorageSelector:
                             id: storage_codetypes
-                            type: 'codetypses'
+                            type: 'codetypes'
 
                     TypedTabItem:
                         id: search_tab
