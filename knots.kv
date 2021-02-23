@@ -12,8 +12,8 @@ BoxLayout:
 
             BoxLayout:
                 id: tabs_layout
-                width: 150
-                size_hint: (.05, 1)
+                size_hint: (0.5, 1)
+                size_hint_min: (200, 32)
                 orientation: 'vertical'
                 padding: 2
                 spacing: 5
@@ -38,103 +38,100 @@ BoxLayout:
                         height: '32dp'
                         on_release:
 
-                TabbedPanel:
-                    id: tp
-                    size_hint_y: 1
-                    do_default_tab: False
-                    tab_height: 32
-                    tab_width: 32
-                    strip_border: [1,1,1,1]
-                 #   strip_image: True
+                BoxLayout:
+                    size_hint: (1, None)
+                    height: 32
 
-                    TypedTabItem:
+                    ToggleButton:
                         id: folders_tab
+                        group: 'tabs'
                         text: 'FL'
                         type: 'folders'
+                        size: (32, 32)
+                        size_hint_max: (32, 32)
+                        size_hint_min: (32, 32)
+                        on_state: if self.state == 'down': app.kv_tab_selected(self.type)
 
-                        BoxLayout:
-                        #    cols: 1
-                            size_hint: (1, 1)
-                            orientation: 'vertical'
-                            BoxLayout:
-                                size: (24, 24)
-                                size_hint: (0.5, None)
-                                orientation: 'horizontal'
-                                Button:
-                                    size: (24, 24)
-                                    text: "+"
-                                    on_release: if hasattr(folders_tree.selected_node, "folder_id") : app.kv_button_add_folder(folders_tree.selected_node)
-                                Button:
-                                    size: (24, 24)
-                                    text: "R"
-                                    on_release: if hasattr(folders_tree.selected_node, "folder_id") : app.kv_button_rename_folder(folders_tree.selected_node)
-
-                            StorageSelector:
-                                id: storage_folders
-                                type: 'folders'
-
-                        #    ScrollView:
-                        #        do_scroll_x: False
-                        #        size_hint: 1, 1
-                        #        bar_color: [.5, .10, .15, .8]
-                        #        bar_inactive_color: [.5, .20, .10, .5]
-                        #        scroll_type: ['bars']  # [‘bars’, ‘content’]
-
-                        #        TreeView:
-                        #            id: folders_tree
-                        #            size_hint: (1, None)
-                        #            hide_root: True
-                        #            indent_start: 20
-                        #            indent_level: 10
-                        #            color_selected: [.5, .10, .15, .8]
-                        #            on_touch_up: if hasattr(self.selected_node, "label_id") : app.kv_fl_tree_selected(self.selected_node.label_id)
-
-                    TypedTabItem:
+                    ToggleButton:
                         id: tags_tab
+                        group: 'tabs'
                         text: 'TG'
                         type: 'tags'
+                        size: (32, 32)
+                        size_hint_max: (32, 32)
+                        size_hint_min: (32, 32)
+                        on_state: if self.state == 'down': app.kv_tab_selected(self.type)
 
-                        StorageSelector:
-                            id: storage_tags
-                            type: 'tags'
-
-                    TypedTabItem:
+                    ToggleButton:
                         id: codetypes_tab
+                        group: 'tabs'
                         text: 'CT'
                         type: 'codetypes'
+                        size: (32, 32)
+                        size_hint_max: (32, 32)
+                        size_hint_min: (32, 32)
+                        on_state: if self.state == 'down': app.kv_tab_selected(self.type)
 
-                        StorageSelector:
-                            id: storage_codetypes
-                            type: 'codetypes'
-
-                    TypedTabItem:
+                    ToggleButton:
                         id: search_tab
-                        text: 'SR'
+                        group: 'tabs'
+                        text: 'SH'
                         type: 'search'
+                        size: (32, 32)
+                        size_hint_max: (32, 32)
+                        size_hint_min: (32, 32)
+                        on_state: if self.state == 'down': app.kv_tab_selected(self.type)
 
-                        StorageSelector:
-                            id: storage_search
-                            type: 'search'
-
-                    TypedTabItem:
+                    ToggleButton:
                         id: bookmarks_tab
-                        #text: 'BM'
+                        group: 'tabs'
                         type: 'bookmarks'
                         background_normal: app.atlas_path + '/star1'
                         background_down: app.atlas_path + '/star2'
+                        type: 'bookmarks'
+                        size: (32, 32)
+                        size_hint_max: (32, 32)
+                        size_hint_min: (32, 32)
+                        on_state: if self.state == 'down': app.kv_tab_selected(self.type)
 
-                        StorageSelector:
-                            id: storage_bookmarks
-                            type: 'bookmarks'
-
-                    TypedTabItem:
+                    ToggleButton:
                         id: trash_tab
-                        text: 'TH'
+                        group: 'tabs'
+                        text: 'TR'
                         type: 'trash'
+                        size: (32, 32)
+                        size_hint_max: (32, 32)
+                        size_hint_min: (32, 32)
+                        on_state: if self.state == 'down': app.kv_tab_selected(self.type)
 
-                        StorageSelector:
-                            id: storage_trash
-                            type: 'trash'
+                BoxLayout:
+                    height: 24
+                    size_hint: (1, None)
+                    orientation: 'horizontal'
+                    BoxLayout:
+                        size: (24, 24)
+                        size_hint: (0.5, None)
+                        orientation: 'horizontal'
+                        visible: True if folders_tab.state == "down" else False
+                        size_hint_x: 0.5 if self.visible else None
+                        opacity: 1 if self.visible else 0
+                        disabled: not self.visible
+                        Button:
+                            size: (24, 24)
+                            size_hint_max: (24, 24)
+                            size_hint_min: (24, 24)
+                            text: "+"
+                            on_release: if folders_tab.state == "down": app.kv_button_add_folder()
+                        Button:
+                            size: (24, 24)
+                            size_hint_max: (24, 24)
+                            size_hint_min: (24, 24)
+                            text: "R"
+                            on_release: if folders_tab.state == "down": app.kv_button_rename_folder()
+
+                StorageSelector:
+                    id: storages
+                    on_selected: app.kv_storage_selected(self.selected)
 
         Splitter:
             sizable_from: 'right'
@@ -265,11 +262,3 @@ BoxLayout:
                     on_release: app.kv_trashed()
 
 <StorageSelector>:
-
-<TypedTabItem@TabbedPanelItem>:
-    type: ''
-
-#<CTextInput@TextInput>
-#    on_focus:
-#        screen = self.parent
-#        if screen.parent: screen.focused = self
