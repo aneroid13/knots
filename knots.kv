@@ -181,18 +181,30 @@ BoxLayout:
         BoxLayout:
             size_hint: (.7, 1)
             orientation: 'vertical'
+            row_default_height: 32
             padding: 2
             spacing: 5
 
-            TextInput:
-                id: title
-                size_hint_y: None
-                multiline: False
-                height: '32dp'
-                focus: True
-                on_text: app.kv_title_entered()
-                on_focus: app.kv_title_focused(self.focused)
+            BoxLayout:
+                size_hint: (1, None)
+                height: 32
+                orientation: 'horizontal'
+                padding: 2
+                spacing: 5
 
+                TextInput:
+                    id: title
+                    size_hint_y: None
+                    multiline: False
+                    height: '32dp'
+                    focus: True
+                    on_text: app.kv_title_entered()
+                    on_focus: app.kv_title_focused(self.focused)
+
+                Spinner:
+                    id: enter_codetype
+                    height: '32dp'
+                    width: '232dp'
 
             Carousel:
                 size_hint: (1, 1)

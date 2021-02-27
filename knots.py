@@ -1,9 +1,4 @@
-# python setup.py build_ext --inplace --embed
-# gcc <C_file_from_cython> -I<include_directory> -L<directory_containing_libpython> -l<name_of_libpython_without_lib_on_the_front> -o <output_file_name>
-# gcc -Os -fPIC ./cyton/knots.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o knots  #Linux
-# gcc -Os -fPIC -D MS_WIN64 ./cyton/knots.c -I/usr/include/python3.8 -L/usr/include/ -lpython3.8 -o knots  #Win
-
-import time, uuid, anytree, itertools
+import time, uuid, anytree
 from anytree.importer import JsonImporter as TreeImporter
 from anytree.exporter import JsonExporter as TreeExporter
 from inspect import getmembers as gm
@@ -263,8 +258,6 @@ class KnotsApp(App):
         return storage_butt
 
     def keyboard_on_key_down(self, keyboard, keycode, text, modifiers):
-        #if keycode[1] == 'escape': keyboard.release()
-
         if keycode[1] == 'tab' or keycode[1] == 'enter':
             self.root.ids.code.focus = True
         return True

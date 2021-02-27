@@ -1,1 +1,4 @@
+cython/build
 .idea/*
+*.c
+*.so
