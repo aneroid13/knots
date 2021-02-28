@@ -90,6 +90,10 @@ class NoteBank:
         self.info_bank[note['id']] = note
         self.text_bank[note['id']] = text
 
+    def check_id(self, id: str):
+        if id in self.info_bank.keys():
+            return True
+
     def get_noteinfo(self, id: str):
         return self.info_bank[id]
 
@@ -121,6 +125,12 @@ class NoteBank:
 
     def get_notes_by_trashcan(self):
         return [note for note in self.info_bank.values() if note['trash']]
+
+    def search(self, phrase, regex):
+        if regex:
+            return self.storemetod.search_regex(phrase)
+        else:
+            return self.storemetod.search(phrase)
 
     def save_notes(self):
         self.storemetod.save_text(self.text_bank)
@@ -439,14 +449,24 @@ class KnotsApp(App):
         self.current.text = self.root.ids.code.text
         self.current.update_time()
 
-    def kv_search_entered(self):
+    def kv_filter_entered(self):
         for butt in self.root.ids.note_bar.children:
             if self.root.ids.search.text not in butt.text:
-                butt.opacity = 0.2
+                butt.opacity = 0
+                butt.size_hint_x = 0
                 butt.disable = True
             else:
                 butt.opacity = 1
+                butt.size_hint_x = 1
                 butt.disable = False
+
+    def kv_search_validate(self, text):
+        self.clear_notes_and_notebar()
+        harvest = self.bank.search(text, regex=False)
+        if harvest:
+            for note_id in harvest:
+                if self.bank.check_id(note_id):
+                    self.add_note_on_bar(note_id, self.bank.get_noteinfo(note_id)['title'], False)
 
     def kv_fl_tree_selected(self, treenode_id):
         self.clear_notes_and_notebar()

@@ -7,8 +7,6 @@ BoxLayout:
             sizable_from: 'right'
             border: (1,1,1,1)
             strip_size: 2
-            min_size: 150
-            man_size: 200
 
             BoxLayout:
                 id: tabs_layout
@@ -109,11 +107,12 @@ BoxLayout:
                     size_hint: (1, None)
                     orientation: 'horizontal'
                     BoxLayout:
-                        size: (24, 24)
-                        size_hint: (0.5, None)
+                        height: 24
+                        width: 200 if self.visible else 0
                         orientation: 'horizontal'
                         visible: True if folders_tab.state == "down" else False
-                        size_hint_x: 0.5 if self.visible else None
+                        size_hint_x: 1 if self.visible else None
+                        size_hint_y: None
                         opacity: 1 if self.visible else 0
                         disabled: not self.visible
                         Button:
@@ -128,6 +127,32 @@ BoxLayout:
                             size_hint_min: (24, 24)
                             text: "R"
                             on_release: if folders_tab.state == "down": app.kv_button_rename_folder()
+
+                    BoxLayout:
+                        height: 24
+                        #width: 200 if self.visible else 0
+                        orientation: 'horizontal'
+                        visible: True if search_tab.state == "down" else False
+                        size_hint_x: 1 if self.visible else None
+                        size_hint_y: None
+                        opacity: 1 if self.visible else 0
+                        disabled: not self.visible
+                        TextInput:
+                            id: search_field
+                            size: (150, 24)
+                            multiline: False
+                            size_hint_max: (200, 24)
+                            size_hint_min: (150, 24)
+                            font_size: 11
+                            text: "!!!"
+                            on_text_validate: app.kv_search_validate(self.text)
+                        CheckBox:
+                            size: (24, 24)
+                            size_hint_max: (24, 24)
+                            size_hint_min: (24, 24)
+                        Label:
+                            halign: 'left'
+                            text: "Regex"
 
                 StorageSelector:
                     id: storages
@@ -166,7 +191,7 @@ BoxLayout:
                         multiline: False
                         height: 32
                         focus: True
-                        on_text: app.kv_search_entered()
+                        on_text: app.kv_filter_entered()
 
                 ScrollView:
                     do_scroll_x: False

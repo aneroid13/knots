@@ -1,5 +1,7 @@
 import json
 from pathlib import Path
+from os import listdir
+import re
 import plugins
 
 @plugins.register
@@ -78,5 +80,26 @@ class KnotsStore:
         return notes
 
     def search(self, phrase):
-        pass
-        # return id[]
+        found_phrases_id = []
+
+        for eachfile in listdir(self.textpath):
+            f_search = open(self.textpath.joinpath(eachfile), "r")
+
+            if [True for line in f_search.readlines() if phrase in line]:
+                found_phrases_id.append(eachfile.strip(".txt"))
+            f_search.close()
+
+        return found_phrases_id
+
+    def search_regex(self, phrase):
+        found_phrases_id = []
+
+        for eachfile in listdir(self.textpath):
+            f_search = open(self.textpath.joinpath(eachfile), "r")
+
+            for line in f_search.readlines():
+                if re.match(phrase, line):
+                    found_phrases_id.append(eachfile.strip(".txt"))
+            f_search.close()
+
+        return found_phrases_id

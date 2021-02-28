@@ -56,3 +56,6 @@ class KnotsStore:
             return None
 
     def search(self, phrase): pass
+
+    def search_regex(self, phrase):
+        pass
