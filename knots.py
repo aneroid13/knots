@@ -449,12 +449,15 @@ class KnotsApp(App):
     def kv_filter_entered(self):
         for butt in self.root.ids.note_bar.children:
             if self.root.ids.search.text not in butt.text:
-                butt.opacity = 0
-                butt.size_hint_x = 0
+                butt.height = 0
+                #butt.width = 0
+                butt.opacity = 1
+                butt.size_hint = (None, None)
                 butt.disable = True
             else:
+                butt.height = self.button_style['vsize']
                 butt.opacity = 1
-                butt.size_hint_x = 1
+                butt.size_hint_y = 1
                 butt.disable = False
 
     def kv_search_validate(self, text, reg):
