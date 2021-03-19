@@ -79,26 +79,20 @@ class KnotsStore:
         f.close()
         return notes
 
-    def search(self, phrase):
+    def search(self, phrase, regex):
         found_phrases_id = []
 
-        for eachfile in listdir(self.textpath):
-            f_search = open(self.textpath.joinpath(eachfile), "r")
-
-            if [True for line in f_search.readlines() if phrase in line]:
-                found_phrases_id.append(eachfile.strip(".txt"))
-            f_search.close()
-
-        return found_phrases_id
-
-    def search_regex(self, phrase):
-        found_phrases_id = []
+        def search_method(str_line):
+            if regex:
+                return bool(re.match(phrase, str_line))
+            else:
+                return phrase in str(str_line)
 
         for eachfile in listdir(self.textpath):
             f_search = open(self.textpath.joinpath(eachfile), "r")
 
             for line in f_search.readlines():
-                if re.match(phrase, line):
+                if search_method(line):
                     found_phrases_id.append(eachfile.strip(".txt"))
             f_search.close()
 

@@ -145,8 +145,9 @@ BoxLayout:
                             size_hint_min: (150, 24)
                             font_size: 11
                             text: "!!!"
-                            on_text_validate: app.kv_search_validate(self.text)
+                            on_text_validate: app.kv_search_validate(self.text, regex.active)
                         CheckBox:
+                            id: regex
                             size: (24, 24)
                             size_hint_max: (24, 24)
                             size_hint_min: (24, 24)

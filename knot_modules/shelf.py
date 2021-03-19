@@ -1,6 +1,7 @@
 import shelve
 from pathlib import Path
 import plugins
+import re
 
 @plugins.register
 class KnotsStore:
@@ -55,7 +56,19 @@ class KnotsStore:
         else:
             return None
 
-    def search(self, phrase): pass
+    def search(self, phrase, regex):
+        found_phrases_id = []
+        shelf = shelve.open(self.shelf_file.as_posix())
 
-    def search_regex(self, phrase):
-        pass
+        def search_method(str_line):
+            if regex:
+                return bool(re.match(phrase, str_line))
+            else:
+                return phrase in str(str_line)
+
+        if 'text' in shelf:
+            for key,value in shelf['text'].items():
+                if search_method(value):
+                    found_phrases_id.append(key)
+
+        return found_phrases_id

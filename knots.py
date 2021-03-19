@@ -127,10 +127,7 @@ class NoteBank:
         return [note for note in self.info_bank.values() if note['trash']]
 
     def search(self, phrase, regex):
-        if regex:
-            return self.storemetod.search_regex(phrase)
-        else:
-            return self.storemetod.search(phrase)
+        return self.storemetod.search(phrase, regex)
 
     def save_notes(self):
         self.storemetod.save_text(self.text_bank)
@@ -460,9 +457,9 @@ class KnotsApp(App):
                 butt.size_hint_x = 1
                 butt.disable = False
 
-    def kv_search_validate(self, text):
+    def kv_search_validate(self, text, reg):
         self.clear_notes_and_notebar()
-        harvest = self.bank.search(text, regex=False)
+        harvest = self.bank.search(text, regex=reg)
         if harvest:
             for note_id in harvest:
                 if self.bank.check_id(note_id):
