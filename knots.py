@@ -1,4 +1,5 @@
 import time, uuid, anytree
+import re
 from anytree.importer import JsonImporter as TreeImporter
 from anytree.exporter import JsonExporter as TreeExporter
 from inspect import getmembers as gm
@@ -90,10 +91,6 @@ class NoteBank:
         self.info_bank[note['id']] = note
         self.text_bank[note['id']] = text
 
-    def check_id(self, id: str):
-        if id in self.info_bank.keys():
-            return True
-
     def get_noteinfo(self, id: str):
         return self.info_bank[id]
 
@@ -126,9 +123,6 @@ class NoteBank:
     def get_notes_by_trashcan(self):
         return [note for note in self.info_bank.values() if note['trash']]
 
-    def search(self, phrase, regex):
-        return self.storemetod.search(phrase, regex)
-
     def save_notes(self):
         self.storemetod.save_text(self.text_bank)
         self.storemetod.save_info(self.info_bank)
@@ -139,6 +133,32 @@ class NoteBank:
     def load_tree(self):
         return self.storemetod.load_tree()
 
+    def search(self, phrase, regex):
+        total_keys = self.search_bank(phrase, regex)
+        store_keys = self.search_store(phrase, regex)
+
+        # Check store_keys id is real and not in memory cache
+        for sk in store_keys:
+            if sk in self.info_bank.keys() and sk not in self.text_bank.keys():
+                total_keys.append(sk)
+
+        return total_keys
+
+    def search_store(self, phrase, regex):
+        return self.storemetod.search(phrase, regex)
+
+    def search_method(self, phrase, str_line, regex):
+        if regex:
+            return bool(re.match(phrase, str_line))
+        else:
+            return phrase in str(str_line)
+
+    def search_bank(self, phrase, regex):
+        found_phrases_id = []
+        for key, text in self.text_bank.items():
+            if self.search_method(phrase, text, regex):
+                found_phrases_id.append(key)
+        return found_phrases_id
 
 class Storage:
     def __init__(self, Name, type):
@@ -465,8 +485,7 @@ class KnotsApp(App):
         harvest = self.bank.search(text, regex=reg)
         if harvest:
             for note_id in harvest:
-                if self.bank.check_id(note_id):
-                    self.add_note_on_bar(note_id, self.bank.get_noteinfo(note_id)['title'], False)
+                self.add_note_on_bar(note_id, self.bank.get_noteinfo(note_id)['title'], False)
 
     def kv_fl_tree_selected(self, treenode_id):
         self.clear_notes_and_notebar()
