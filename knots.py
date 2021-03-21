@@ -23,7 +23,7 @@ from kivy.clock import Clock
 from kivy.event import EventDispatcher
 from kivy.animation import Animation
 from kivy.weakproxy import WeakProxy
-
+from pygments import lexers
 import knot_modules
 # import shaders
 
@@ -255,9 +255,10 @@ class KnotsApp(App):
         self.root.ids.title.keyboard_on_key_down = self.keyboard_on_key_down
         for each in self.storages:
             self.root.ids.storages.add_widget(self.fill_accordion_item(each))
-
         self.root.ids.folders_tab.state = 'down'
 
+        lex_gen = (lex[0] for lex in lexers.get_all_lexers())
+        self.root.ids.enter_codetype.values = [lex for lex in lex_gen]
 
     def get_current_storage(self):
         return [st for st in self.storages if st.id == self.current_storage_id][0]
