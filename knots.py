@@ -19,10 +19,12 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.accordion import Accordion, AccordionItem, AccordionException
+from kivy.uix.settings import SettingsWithSidebar, SettingItem, SettingPath  # SettingsWithTabbedPanel
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
 from kivy.animation import Animation
 from kivy.weakproxy import WeakProxy
+
 from pygments import lexers
 import knot_modules
 # import shaders
@@ -230,6 +232,30 @@ class TreeView_NewFolderInput(BoxLayout, TreeViewNode):
         knots.remove_textinput(self)
 
 
+class SettingCodeMenu(SettingItem):
+    def __init__(self, **kwargs):
+        super(SettingCodeMenu, self).__init__(**kwargs)
+
+json = '''
+[
+    {
+        "type": "string",
+        "title": "Label caption",
+        "desc": "Choose the text that appears in the label",
+        "section": "First",
+        "key": "text"
+    },
+    {
+        "type": "codemenu",
+        "title": "Used code languages",
+        "desc": "Choose the code languages",
+        "section": "First",
+        "key": "font_size"
+    }
+]
+'''
+
+
 class KnotsApp(App):
     title = "Knots"
     atlas_path = 'atlas://images/default/default'
@@ -238,6 +264,7 @@ class KnotsApp(App):
 
     def __init__(self):
         super().__init__()
+        self.settings_cls = SettingsWithSidebar
         self.button_style = {"vsize": 56, "valign": "middle", "short": False, "textrows": 2}
         self.storages = []
         self.storages.append(Storage("MyStorage", "filesystem"))
@@ -248,6 +275,14 @@ class KnotsApp(App):
         self.current_folder_id = '0'
         self.bank = self.storages[0].bank
     #    Clock.schedule_interval(self.bank.save_notes(), 60 * 10)   # Save notes automatically every 10 min
+
+    def build_config(self, config):
+        config.setdefaults('First', {'text': 'Hello', 'font_size': 20})
+
+    def build_settings(self, settings):
+        self.use_kivy_settings = False
+        settings.register_type('codemenu', SettingCodeMenu)
+        settings.add_json_panel('Base', self.config, data=json)
 
     def build(self):
         self.root.ids.note_bar.bind(minimum_height=self.root.ids.note_bar.setter('height'))
