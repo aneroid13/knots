@@ -7,7 +7,7 @@ from pprint import pprint as pp
 from functools import partial
 from kivy.app import App
 from kivy.config import Config
-from kivy.properties import StringProperty, DictProperty
+from kivy.properties import StringProperty, DictProperty, ObjectProperty, ListProperty
 from kivy.atlas import Atlas
 from kivy.uix.treeview import TreeView, TreeViewLabel, TreeViewNode
 from kivy.core.window import Window
@@ -17,6 +17,7 @@ from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.accordion import Accordion, AccordionItem, AccordionException
 from kivy.uix.settings import SettingsWithSidebar, SettingItem, SettingPath  # SettingsWithTabbedPanel
@@ -24,6 +25,8 @@ from kivy.clock import Clock
 from kivy.event import EventDispatcher
 from kivy.animation import Animation
 from kivy.weakproxy import WeakProxy
+from kivy.metrics import dp
+from kivy.uix.popup import Popup
 
 from pygments import lexers
 import knot_modules
@@ -233,8 +236,73 @@ class TreeView_NewFolderInput(BoxLayout, TreeViewNode):
 
 
 class SettingCodeMenu(SettingItem):
-    def __init__(self, **kwargs):
-        super(SettingCodeMenu, self).__init__(**kwargs)
+    options = ListProperty(['1', '2'])
+    popup = ObjectProperty(None, allownone=True)
+    '''(internal) Used to store the current popup when it is shown.
+
+    :attr:`popup` is an :class:`~kivy.properties.ObjectProperty` and defaults
+    to None.
+    '''
+
+    def on_panel(self, instance, value):
+        if value is None:
+            return
+        self.fbind('on_release', self._create_popup)
+
+    def _set_option(self, instance):
+        self.value = instance.text
+        self.popup.dismiss()
+
+    def _add_lang(self, btn):
+        self.options.append(btn.text)
+
+    def _rm_lang(self, btn):
+        pass
+
+    def _create_popup(self, instance):
+        # create the popup
+        content = BoxLayout(orientation='vertical', spacing='5dp')
+        popup_width = min(0.95 * Window.width, dp(700))
+        self.popup = Popup(content=content, title=self.title, size_hint=(None, None), size=(popup_width, '400dp'))
+        self.popup.height = 0.95 * Window.height
+
+        # add all the options
+        #content.add_widget(Widget(size_hint_y=None, height=1))
+        scrolls_box = BoxLayout(orientation='horizontal', spacing='5dp')
+        layout_all = GridLayout(cols=1, padding=5, spacing=5, size_hint=(None, None))
+        layout_all.bind(minimum_height=layout_all.setter('height'))
+        scroll_all = ScrollView(size_hint=(None, None), size=(300, 320), pos_hint={'center_x': .5, 'center_y': .5}, do_scroll_x=False)
+        lex_gen = (lex[0] for lex in lexers.get_all_lexers())
+        for lex in lex_gen:
+            btn = Button(text=str(lex), size=(300, 30), size_hint=(None, None))
+            btn.bind(on_release=self._add_lang)
+            layout_all.add_widget(btn)
+        scroll_all.add_widget(layout_all)
+        scrolls_box.add_widget(scroll_all)
+
+        layout_use = GridLayout(cols=1, padding=5, spacing=5, size_hint=(None, None))
+        layout_use.bind(minimum_height=layout_use.setter('height'))
+        scroll_use = ScrollView(size_hint=(None, None), size=(300, 320), pos_hint={'center_x': .5, 'center_y': .5}, do_scroll_x=False)
+        for opt in self.options:
+            btn = Button(text=str(opt), size=(300, 30), size_hint=(None, None))
+            btn.bind(on_release=self._rm_lang)
+            layout_use.add_widget(btn)
+
+        scroll_use.add_widget(layout_use)
+        scrolls_box.add_widget(scroll_use)
+        content.add_widget(scrolls_box)
+
+        #btn.bind(on_release=self._set_option)
+
+
+        # finally, add a cancel button to return on the previous panel
+        btn = Button(text='OK', size_hint_y=None, height=dp(50))
+        btn.bind(on_release=self.popup.dismiss)
+        content.add_widget(btn)
+
+        # and open the popup !
+        self.popup.open()
+
 
 json = '''
 [
@@ -250,7 +318,7 @@ json = '''
         "title": "Used code languages",
         "desc": "Choose the code languages",
         "section": "First",
-        "key": "font_size"
+        "key": "code_types"
     }
 ]
 '''
@@ -277,7 +345,7 @@ class KnotsApp(App):
     #    Clock.schedule_interval(self.bank.save_notes(), 60 * 10)   # Save notes automatically every 10 min
 
     def build_config(self, config):
-        config.setdefaults('First', {'text': 'Hello', 'font_size': 20})
+        config.setdefaults('First', {'text': 'Hello', 'code_types': ['Python']})
 
     def build_settings(self, settings):
         self.use_kivy_settings = False
