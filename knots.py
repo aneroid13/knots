@@ -1,5 +1,6 @@
 import time, uuid, anytree
 import re
+import json
 from anytree.importer import JsonImporter as TreeImporter
 from anytree.exporter import JsonExporter as TreeExporter
 from inspect import getmembers as gm
@@ -27,7 +28,7 @@ from kivy.animation import Animation
 from kivy.weakproxy import WeakProxy
 from kivy.metrics import dp
 from kivy.uix.popup import Popup
-
+from kivy.properties import ConfigParser, ConfigParserProperty
 from pygments import lexers
 import knot_modules
 # import shaders
@@ -236,13 +237,22 @@ class TreeView_NewFolderInput(BoxLayout, TreeViewNode):
 
 
 class SettingCodeMenu(SettingItem):
-    options = ListProperty(['1', '2'])
-    popup = ObjectProperty(None, allownone=True)
-    '''(internal) Used to store the current popup when it is shown.
-
-    :attr:`popup` is an :class:`~kivy.properties.ObjectProperty` and defaults
-    to None.
     '''
+    (internal) Used to store the current popup when it is shown.
+
+    :attr:`popup` is an :class:`~kivy.properties.ObjectProperty` and defaults to None.
+    '''
+
+    #get_codetypes = ConfigParser.get_configparser('app') #
+
+    options = ''
+    popup = ObjectProperty(None, allownone=True)
+
+    # def __init__(self):
+    #     get_codetypes = ConfigParserProperty('markdown', 'First', 'code_types', 'app', val_type=str)  # ListProperty()
+    #     pp(self.app.code_types)
+    #     for cde in get_codetypes:
+    #         pp(str(cde))
 
     def on_panel(self, instance, value):
         if value is None:
@@ -250,14 +260,14 @@ class SettingCodeMenu(SettingItem):
         self.fbind('on_release', self._create_popup)
 
     def _set_option(self, instance):
-        self.value = instance.text
+        self.value = ",".join(self.options)
         self.popup.dismiss()
 
     def _add_lang(self, btn):
         self.options.append(btn.text)
 
     def _rm_lang(self, btn):
-        pass
+        self.options.remove(btn.text)
 
     def _create_popup(self, instance):
         # create the popup
@@ -292,27 +302,20 @@ class SettingCodeMenu(SettingItem):
         scrolls_box.add_widget(scroll_use)
         content.add_widget(scrolls_box)
 
-        #btn.bind(on_release=self._set_option)
+        btn_ok = Button(text='OK', size_hint_y=None, height=dp(50))
+        btn_ok.bind(on_release=self._set_option)
 
-
-        # finally, add a cancel button to return on the previous panel
-        btn = Button(text='OK', size_hint_y=None, height=dp(50))
-        btn.bind(on_release=self.popup.dismiss)
-        content.add_widget(btn)
+        btn_cl = Button(text='Cancel', size_hint_y=None, height=dp(50))
+        btn_cl.bind(on_release=self.popup.dismiss)
+        content.add_widget(btn_ok)
+        content.add_widget(btn_cl)
 
         # and open the popup !
         self.popup.open()
 
 
-json = '''
+settings_json = '''
 [
-    {
-        "type": "string",
-        "title": "Label caption",
-        "desc": "Choose the text that appears in the label",
-        "section": "First",
-        "key": "text"
-    },
     {
         "type": "codemenu",
         "title": "Used code languages",
@@ -345,12 +348,19 @@ class KnotsApp(App):
     #    Clock.schedule_interval(self.bank.save_notes(), 60 * 10)   # Save notes automatically every 10 min
 
     def build_config(self, config):
-        config.setdefaults('First', {'text': 'Hello', 'code_types': ['Python']})
+        config.setdefaults('First', {'code_types': ['markdown']})
 
     def build_settings(self, settings):
         self.use_kivy_settings = False
+        def_codetypes = self.config.get('First', 'code_types').split(',')
         settings.register_type('codemenu', SettingCodeMenu)
-        settings.add_json_panel('Base', self.config, data=json)
+        settings.add_json_panel('Base', self.config, data=settings_json)
+
+    def on_config_change(self, config, section, key, value):
+        if config is self.config:
+            token = (section, key)
+            if token == ('First', 'code_types'):
+                self.root.ids.enter_codetype.values = value.split(',')
 
     def build(self):
         self.root.ids.note_bar.bind(minimum_height=self.root.ids.note_bar.setter('height'))
@@ -360,8 +370,8 @@ class KnotsApp(App):
             self.root.ids.storages.add_widget(self.fill_accordion_item(each))
         self.root.ids.folders_tab.state = 'down'
 
-        lex_gen = (lex[0] for lex in lexers.get_all_lexers())
-        self.root.ids.enter_codetype.values = [lex for lex in lex_gen]
+        #lex_gen = (lex[0] for lex in lexers.get_all_lexers())
+        self.root.ids.enter_codetype.values = self.config.get('First', 'code_types').split(',')  # [lex for lex in lex_gen]
 
     def get_current_storage(self):
         return [st for st in self.storages if st.id == self.current_storage_id][0]
